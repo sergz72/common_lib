@@ -1,25 +1,6 @@
 #include "board.h"
 #include <tsl2591.h>
 
-#define REG_ENABLE  0xA0
-#define REG_CONFIG  0xA1
-#define REG_AILTL   0xA4
-#define REG_AILTH   0xA5
-#define REG_AIHTL   0xA6
-#define REG_AIHTH   0xA7
-#define REG_NPAILTL 0xA8
-#define REG_NPAILTH 0xA9
-#define REG_NPAIHTL 0xAA
-#define REG_NPAIHTH 0xAB
-#define REG_PERSIST 0xAC
-#define REG_PID     0xB1
-#define REG_ID      0xB2
-#define REG_STATUS  0xB3
-#define REG_C0DATAL 0xB4
-#define REG_C0DATAH 0xB5
-#define REG_C1DATAL 0xB6
-#define REG_C1DATAH 0xB7
-
 #define TSL2591_LUX_DF    816.0f   ///< Lux coefficient
 
 static const unsigned int gain_scaling[4] = {1, 25, 428, 9876};
@@ -27,7 +8,7 @@ static const tsl2591_config *config;
 
 static unsigned char itime;
 
-static int tsl2591_set_gain(unsigned char gain)
+int tsl2591_set_gain(unsigned char gain)
 {
   return tsl2591_write(REG_CONFIG, (gain << 4) | itime);
 }
@@ -182,5 +163,7 @@ int tsl2591_measure(tsl2591_result *result)
   // Alternate lux calculation 1
   // See: https://github.com/adafruit/Adafruit_TSL2591_Library/issues/14
   result->lux = (ch0f - ch1f) * (1.0f - ch1f / ch0f) / cpl;
+  result->rawch0 = ch0;
+  result->rawch1 = ch1;
   return 0;
 }

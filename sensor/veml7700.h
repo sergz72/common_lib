@@ -41,6 +41,7 @@ typedef struct
   float lux;
   unsigned int gainx8;
   unsigned int tries;
+  unsigned short raw;
 } veml7700_result;
 
 int veml7700_read(unsigned char reg, unsigned short *data); // should be defined in hal.c

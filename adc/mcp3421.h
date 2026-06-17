@@ -26,7 +26,7 @@ typedef struct {
 int mcp3421Read(int channel, unsigned char address, unsigned char *data, unsigned int l);
 int mcp3421Write(int channel, unsigned char address, unsigned char data);
 int mcp3421SetConfig(int channel, unsigned char address, const MCP3421Config *cfg);
-int mcp3421Get18BitVoltage(int channel, unsigned char address, int *voltage);
-int mcp3421Get16BitVoltage(int channel, unsigned char address, int *voltage);
+int mcp3421Get18BitVoltage(int channel, unsigned char address, long *voltage);
+int mcp3421Get16BitVoltage(int channel, unsigned char address, short *voltage);
 
 #endif

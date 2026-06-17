@@ -88,6 +88,7 @@ int veml7700_measure(veml7700_result *result, int wait)
     if (value >= 0x7000)
     {
       result->lux = calculate_lux(value, 1);
+      result->raw = value;
       return 0;
     }
     result->tries++;
@@ -116,6 +117,7 @@ int veml7700_measure(veml7700_result *result, int wait)
     else
     {
       result->lux = calculate_lux(value, result->gainx8);
+      result->raw = value;
       break;
     }
   }
