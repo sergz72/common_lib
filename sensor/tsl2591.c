@@ -10,7 +10,7 @@ static unsigned char itime;
 
 int tsl2591_set_gain(unsigned char gain)
 {
-  return tsl2591_write(REG_CONFIG, (gain << 4) | itime);
+  return tsl2591_write(REG_CONFIG, (unsigned char)((gain << 4) | itime));
 }
 
 int tsl2591_set_als_thresholds(const tsl2591_thresholds *thresholds)
@@ -97,7 +97,7 @@ int tsl2591_init(const tsl2591_config *conf)
   if (rc)
     return rc;
 
-  return tsl2591_set_persistence_filter(config->persistence_filter);
+  return tsl2591_set_persistence_filter((unsigned char)config->persistence_filter);
 }
 
 int tsl2591_clear_interrupts(void)
@@ -129,7 +129,7 @@ int tsl2591_measure(tsl2591_result *result)
       return rc;
     if ((ch0 == 0xFFFF || ch1 == 0xFFFF) && result->gain != 0)
     {
-      rc = tsl2591_set_gain(--result->gain);
+      rc = tsl2591_set_gain((unsigned char)--result->gain);
       if (rc)
         return rc;
       delayms(2000);
@@ -144,7 +144,7 @@ int tsl2591_measure(tsl2591_result *result)
       result->gain = 2;
     else
       result->gain = 3;
-    rc = tsl2591_set_gain(result->gain);
+    rc = tsl2591_set_gain((unsigned char)result->gain);
     if (rc)
       return rc;
     result->tries++;
