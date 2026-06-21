@@ -2,26 +2,24 @@
 
 // this array represents the number of days in one non-leap year at
 // the beginning of each month
-unsigned int DaysToMonth[13] = {
+const unsigned int DaysToMonth[13] = {
   0,31,59,90,120,151,181,212,243,273,304,334,365
 };
 
-unsigned int rtc_to_binary(rtc_data *data)
+unsigned long rtc_to_binary(const rtc_data *data)
 {
-  unsigned int iday;
-  unsigned int val;
+  unsigned long iday;
+  unsigned long val;
   
-  iday = 365 * (data->year - 1970) + DaysToMonth[data->month - 1] + (data->day - 1);
+  iday = 365UL * (data->year - 1970) + rtc_get_yday(data->year, data->month, data->day);
   iday += (data->year - 1969) / 4;
-  if ((data->month > 2) && ((data->year % 4) == 0))
-    iday++;
   
-  val = data->seconds + 60 * data->minutes + 3600 * (data->hours + 24 * iday);
+  val = data->seconds + 60UL * data->minutes + 3600UL * (data->hours + 24 * iday);
 
   return val;
 }
 
-void rtc_from_binary(unsigned int binary, rtc_data *data)
+void rtc_from_binary(unsigned long binary, rtc_data *data)
 {
   unsigned int hour;
   unsigned int day;
@@ -29,10 +27,10 @@ void rtc_from_binary(unsigned int binary, rtc_data *data)
   unsigned int second;
   unsigned int month;
   unsigned int year;
-  unsigned int whole_minutes;
-  unsigned int whole_hours;
-  unsigned int whole_days;
-  unsigned int whole_days_since_1968;
+  unsigned long whole_minutes;
+  unsigned long whole_hours;
+  unsigned long whole_days;
+  unsigned long whole_days_since_1968;
   unsigned int leap_year_periods;
   unsigned int days_since_current_lyear;
   unsigned int whole_years;
@@ -95,12 +93,8 @@ unsigned int rtc_get_wday(unsigned int year, unsigned int month, unsigned int da
 
 unsigned int rtc_get_yday(unsigned int year, unsigned int month, unsigned int day)
 {
-  rtc_data data;
-
-  data.year = year;
-  data.month = month;
-  data.day = day;
-  data.hours = data.minutes = data.seconds = 0;
-  rtc_from_binary(rtc_to_binary(&data), &data);
-  return data.yday;
+  unsigned int yday = DaysToMonth[month - 1] + day - 1;
+  if ((month > 2) && ((year % 4) == 0))
+    yday++;
+  return yday;
 }

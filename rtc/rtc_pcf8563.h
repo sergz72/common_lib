@@ -2,6 +2,7 @@
 #define _RTC_PCF8563_H
 
 #include <rtc_func.h>
+#include <stdbool.h>
 
 #define PCF8563_I2C_ADDRESS 0xA2
 
