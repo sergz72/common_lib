@@ -139,7 +139,7 @@ int pcf8563_cancel_timer(void)
   return i2c_pcf8563_write(data, 2);
 }
 
-int pcf8563_set_datetime(int year, int month, int day, int hour, int minute, int seconds)
+int pcf8563_set_datetime(unsigned int year, unsigned char month, unsigned char day, unsigned char hour, unsigned char minute, unsigned char seconds)
 {
   unsigned char data[8];
 

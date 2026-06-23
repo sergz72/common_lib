@@ -21,11 +21,11 @@ unsigned long rtc_to_binary(const rtc_data *data)
 
 void rtc_from_binary(unsigned long binary, rtc_data *data)
 {
-  unsigned int hour;
-  unsigned int day;
-  unsigned int minute;
-  unsigned int second;
-  unsigned int month;
+  unsigned char hour;
+  unsigned char day;
+  unsigned char minute;
+  unsigned char second;
+  unsigned char month;
   unsigned int year;
   unsigned long whole_minutes;
   unsigned long whole_hours;
@@ -36,7 +36,7 @@ void rtc_from_binary(unsigned long binary, rtc_data *data)
   unsigned int whole_years;
   unsigned int days_since_first_of_year;
   unsigned int days_to_month;
-  unsigned int day_of_week;
+  unsigned char day_of_week;
 
   whole_minutes = binary / 60;
   second = binary - (60 * whole_minutes); // leftover seconds
@@ -79,7 +79,7 @@ void rtc_from_binary(unsigned long binary, rtc_data *data)
   data->year    = year + 1900; /* years */
 }
 
-unsigned int rtc_get_wday(unsigned int year, unsigned int month, unsigned int day)
+unsigned char rtc_get_wday(unsigned int year, unsigned char month, unsigned char day)
 {
   rtc_data data;
 
@@ -91,10 +91,10 @@ unsigned int rtc_get_wday(unsigned int year, unsigned int month, unsigned int da
   return data.wday;
 }
 
-unsigned int rtc_get_yday(unsigned int year, unsigned int month, unsigned int day)
+unsigned int rtc_get_yday(unsigned int year, unsigned char month, unsigned char day)
 {
   unsigned int yday = DaysToMonth[month - 1] + day - 1;
-  if ((month > 2) && ((year % 4) == 0))
+  if ((month > 2) && ((year & 3) == 0))
     yday++;
   return yday;
 }

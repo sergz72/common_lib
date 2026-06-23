@@ -59,7 +59,7 @@ int pcf8563_get(rtc_data *data);
 int pcf8563_get_alarm(pcf8563_alarm *data);
 int pcf8563_set_timer(unsigned char value, unsigned char timer_clock);
 int pcf8563_cancel_timer(void);
-int pcf8563_set_datetime(int year, int month, int day, int hour, int minute, int seconds);
+int pcf8563_set_datetime(unsigned int year, unsigned char month, unsigned char day, unsigned char hour, unsigned char minute, unsigned char seconds);
 int pcf8563_set_alarm(const pcf8563_alarm *adata);
 int pcf8563_cancel_alarm(void);
 
