@@ -10,20 +10,20 @@ enum si5351_drive {SI5351_DRIVE_2MA, SI5351_DRIVE_4MA, SI5351_DRIVE_6MA, SI5351_
 typedef struct
 {
     unsigned char device_address;
-    int channel;
-    unsigned int mClk;
+    unsigned char channel;
+    unsigned long mClk;
     enum si5351_crystal_load load;
     enum si5351_variant variant;
-    int output_count;
+    unsigned char output_count;
 } si5351_conf;
 
 typedef struct
 {
     const si5351_conf conf;
     double fVCO[2];
-    unsigned int max_frequency;
-    unsigned int max_frequency_plla;
-    unsigned int min_frequency;
+    unsigned long max_frequency;
+    unsigned long max_frequency_plla;
+    unsigned long min_frequency;
     unsigned char clock_enable_flags;
     unsigned char clock_control[8];
 } si5351_dev;
@@ -32,9 +32,9 @@ int si5351_write(unsigned char device_address, int channel, const unsigned char 
 int si5351_read(unsigned char device_address, int channel, unsigned char register_no, unsigned char *data, unsigned int length); // should be defined in hal.c
 
 int si5351_init(const si5351_conf *conf, si5351_dev *device);
-int si5351_enable_output(si5351_dev *device, int output_no, int enable);
-int si5351_set_frequency(si5351_dev *device, int output_no, unsigned int frequency, unsigned int divider);
-int si5351_set_drive_strength(si5351_dev *device, int output_no, enum si5351_drive drive);
+int si5351_enable_output(si5351_dev *device, unsigned char output_no, char enable);
+int si5351_set_frequency(si5351_dev *device, unsigned char output_no, unsigned long frequency, unsigned char divider);
+int si5351_set_drive_strength(si5351_dev *device, unsigned char output_no, enum si5351_drive drive);
 int si5351_get_status(const si5351_dev *device, unsigned char *status);
 int si5351_set_crystal_load(const si5351_dev *device, enum si5351_crystal_load load);
 

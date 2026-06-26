@@ -13,12 +13,12 @@
 
 #define SI5351_PARAMETERS_LENGTH  8
 
-#define PLL_MAX_FREQUENCY 900000000
-#define PLL_MIN_FREQUENCY 600000000
+#define PLL_MAX_FREQUENCY 900000000UL
+#define PLL_MIN_FREQUENCY 600000000UL
 
 enum si5351_pll {SI5351_PLLA, SI5351_PLLB};
 
-static int set_msn(si5351_dev *device, enum si5351_pll pll, unsigned int p1, unsigned int p2, unsigned int p3)
+static int set_msn(si5351_dev *device, enum si5351_pll pll, unsigned long p1, unsigned long p2, unsigned long p3)
 {
     unsigned char data[SI5351_PARAMETERS_LENGTH+1];
     data[0] = pll == SI5351_PLLA ? SI5351_PLLA_PARAMETERS : SI5351_PLLB_PARAMETERS;
@@ -33,8 +33,8 @@ static int set_msn(si5351_dev *device, enum si5351_pll pll, unsigned int p1, uns
     return si5351_write(device->conf.device_address, device->conf.channel, data, SI5351_PARAMETERS_LENGTH+1);
 }
 
-static int set_ms(si5351_dev *device, int output_no, unsigned int p1, unsigned int p2, unsigned int p3,
-                    unsigned int div_by_4, unsigned int r_div)
+static int set_ms(si5351_dev *device, int output_no, unsigned long p1, unsigned long p2, unsigned long p3,
+                    unsigned char div_by_4, unsigned char r_div)
 {
     unsigned char data[SI5351_PARAMETERS_LENGTH+1];
     data[0] = (unsigned char)(SI5351_CLK0_PARAMETERS + output_no * SI5351_PARAMETERS_LENGTH);
@@ -51,20 +51,20 @@ static int set_ms(si5351_dev *device, int output_no, unsigned int p1, unsigned i
 
 static int set_pll(si5351_dev *device, enum si5351_pll pll, double coef)
 {
-    unsigned int a = (unsigned int)coef;
+    unsigned long a = (unsigned long)coef;
     double c = 1048575;
-    unsigned int ic = 1048575;
+    unsigned long ic = 1048575;
     double b = (coef - a) * 1048575;
-    unsigned int bc128 = (unsigned int)(b * 128 / c);
-    unsigned int p1 = 128 * a + bc128 - 512;
-    unsigned int p2 = 128 * (unsigned int)b - ic * bc128;
+    unsigned long bc128 = (unsigned long)(b * 128 / c);
+    unsigned long p1 = 128 * a + bc128 - 512;
+    unsigned long p2 = 128 * (unsigned long)b - ic * bc128;
     return set_msn(device, pll, p1, p2, ic);
 }
 
 static int set_pll_parameters(si5351_dev *device)
 {
-    unsigned int coef = (PLL_MAX_FREQUENCY / device->conf.mClk) & 0xFFFFFFFE; // even number
-    unsigned int pll_frequency = device->conf.mClk * coef;
+    unsigned long coef = (PLL_MAX_FREQUENCY / device->conf.mClk) & 0xFFFFFFFE; // even number
+    unsigned long pll_frequency = device->conf.mClk * coef;
     device->fVCO[0] = pll_frequency;
     device->fVCO[1] = pll_frequency;
     device->max_frequency = PLL_MAX_FREQUENCY / 4;
@@ -76,12 +76,12 @@ static int set_pll_parameters(si5351_dev *device)
     return set_pll(device, SI5351_PLLB, coef);
 }
 
-static int validate_output_no(si5351_dev *device, int output_no)
+static int validate_output_no(si5351_dev *device, unsigned char output_no)
 {
-    return output_no < 0 || output_no >= device->conf.output_count;
+    return output_no >= device->conf.output_count;
 }
 
-static int update_clock_control(si5351_dev *device, int output_no)
+static int update_clock_control(si5351_dev *device, unsigned char output_no)
 {
     unsigned char data[2];
     data[0] = SI5351_CLK0_CTRL + (unsigned char)output_no;
@@ -130,20 +130,24 @@ int si5351_init(const si5351_conf *conf, si5351_dev *device)
     return set_pll_parameters(device);
 }
 
-int si5351_enable_output(si5351_dev *device, int output_no, int enable)
+int si5351_enable_output(si5351_dev *device, unsigned char output_no, char enable)
 {
     int rc = validate_output_no(device, output_no);
     if (rc)
         return rc;
     if (enable)
     {
-        device->clock_enable_flags &= ~(1 << output_no);
-        device->clock_control[output_no] &= 0x7F;
+        unsigned char c = device->clock_enable_flags & ~(1 << output_no);
+        device->clock_enable_flags = c;
+        c = device->clock_control[output_no] & 0x7F;
+        device->clock_control[output_no] = c;
     }
     else
     {
-        device->clock_enable_flags |= 1 << output_no;
-        device->clock_control[output_no] |= 0x80;
+        unsigned char c = device->clock_enable_flags | (1 << output_no);
+        device->clock_enable_flags = c;
+        c = device->clock_control[output_no] | 0x80;
+        device->clock_control[output_no] = c;
     }
     rc = update_clock_control(device, output_no);
     if (rc)
@@ -151,7 +155,7 @@ int si5351_enable_output(si5351_dev *device, int output_no, int enable)
     return update_clock_enable(device);
 }
 
-static int set_hi_frequency(si5351_dev *device, int output_no, unsigned int frequency)
+static int set_hi_frequency(si5351_dev *device, unsigned char output_no, unsigned long frequency)
 {
     if (frequency < PLL_MIN_FREQUENCY / 4) // cannot set frequency between 112.5 and 150 MHz
         return 10;
@@ -162,11 +166,12 @@ static int set_hi_frequency(si5351_dev *device, int output_no, unsigned int freq
     rc = set_ms(device, output_no, 0, 0, 1, 3, 0);
     if (rc)
         return rc;
-    device->clock_control[output_no] |= 0x60; //MSx_INT=1,  MS0_SRC = PLLB
+    unsigned char c = device->clock_control[output_no] | 0x60; //MSx_INT=1,  MS0_SRC = PLLB
+    device->clock_control[output_no] = c;
     return update_clock_control(device, output_no);
 }
 
-int si5351_set_frequency(si5351_dev *device, int output_no, unsigned int frequency, unsigned int divider)
+int si5351_set_frequency(si5351_dev *device, unsigned char output_no, unsigned long frequency, unsigned char divider)
 {
     int rc = validate_output_no(device, output_no);
     if (rc)
@@ -175,7 +180,7 @@ int si5351_set_frequency(si5351_dev *device, int output_no, unsigned int frequen
         return 2;
     if (frequency > device->max_frequency_plla)
         return set_hi_frequency(device, output_no, frequency);
-    unsigned int r_div;
+    unsigned char r_div;
     switch (divider)
     {
         case 1:
@@ -206,22 +211,23 @@ int si5351_set_frequency(si5351_dev *device, int output_no, unsigned int frequen
             return 3;
     }
     double coef = device->fVCO[0] / (double)frequency;
-    unsigned int a = (unsigned int)coef;
+    unsigned long a = (unsigned long)coef;
     double c = 1048575;
-    unsigned int ic = 1048575;
+    unsigned long ic = 1048575;
     double b = (coef - a) * 1048575;
-    unsigned int bc128 = (unsigned int)(b * 128 / c);
-    unsigned int p1 = 128 * a + bc128 - 512;
-    unsigned int p2 = 128 * (unsigned int)b - ic * bc128;
-    unsigned int div_by_4 = 0;
+    unsigned long bc128 = (unsigned int)(b * 128 / c);
+    unsigned long p1 = 128 * a + bc128 - 512;
+    unsigned long p2 = 128 * (unsigned int)b - ic * bc128;
+    unsigned char div_by_4 = 0;
     rc = set_ms(device, output_no, p1, p2, ic, div_by_4, r_div);
     if (rc)
         return rc;
-    device->clock_control[output_no] &= 0x9F; //MSx_INT=0,  MS0_SRC = PLLA
+    unsigned char cc = device->clock_control[output_no] & 0x9F; //MSx_INT=0,  MS0_SRC = PLLA
+    device->clock_control[output_no] = cc;
     return update_clock_control(device, output_no);
 }
 
-int si5351_set_drive_strength(si5351_dev *device, int output_no, enum si5351_drive drive)
+int si5351_set_drive_strength(si5351_dev *device, unsigned char output_no, enum si5351_drive drive)
 {
     int rc = validate_output_no(device, output_no);
     if (rc)
