@@ -205,16 +205,16 @@ int cc1101_Init(unsigned int device_num, const cc1101_cfg *cfg)
   txdata[3] = p.FSCAL1;
   txdata[4] = p.FSCAL0;
   rc = cc1101_RW(device_num, txdata, rxdata, 5);
-  if (!rc)
-    return 0;
+  if (rc)
+    return rc;
 
   txdata[0] = CC1101_TEST2;
   txdata[1] = p.TEST2;
   txdata[2] = p.TEST1;
   txdata[3] = p.TEST0;
   rc = cc1101_RW(device_num, txdata, rxdata, 4);
-  if (!rc)
-    return 0;
+  if (rc)
+    return rc;
 
   return cc1101_setTxPower(device_num, cfg->txPower);
 }
@@ -239,13 +239,13 @@ int cc1101_Check(unsigned int device_num)
   if (rc)
     return rc;
   if (rxdata[1])
-    return 100;
+    return rxdata[1] | 256;
 
   txdata[0] = CC1101_VERSION;
   rc = cc1101_RW(device_num, txdata, rxdata, 2);
   if (rc)
     return rc;
-  return rxdata[1] == 0x14 ? 0 : 101;
+  return rxdata[1] == 0x14 ? 0 : rxdata[1] | 512;
 }
 
 void cc1101_powerOn(unsigned int device_num)
