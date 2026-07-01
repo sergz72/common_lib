@@ -36,7 +36,7 @@ typedef struct
 
 int mcp47_set_config(int channel, const MCP47Config *cfg);
 int mcp47_power_down(int channel, unsigned short config);
-int mcp47_set(int channel, unsigned int ch, unsigned short value);
+int mcp47_set(int channel, unsigned char ch, unsigned short value);
 
 int mcp47_write_register(int channel, unsigned char reg, unsigned short value); // should be defined in hal.c
 
