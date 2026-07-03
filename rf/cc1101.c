@@ -58,6 +58,32 @@ typedef struct {
 #define FOSC 26000
 
 BaudRateAndModeParameters baudRateAndModeParameters[] = {
+  //GFSK 600
+  {
+    0x40U,
+    7,
+    0xD3,
+    0x91,
+    6,
+    0x10, // GFSK
+    2,
+    0xF8,
+    0xF4,
+    0x83,
+    0x15,
+    0x16,
+    3,
+    0x40,
+    0xFB,
+    0xE9,
+    0x2A,
+    0,
+    0x1F,
+    0x81,
+    0x35,
+    0x09,
+    0 // Normal mode, use FIFOs for RX and TX
+  },
   //GFSK 1200
   {
     0x40U,
