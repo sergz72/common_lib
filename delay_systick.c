@@ -2,6 +2,10 @@
 #include <delay_systick.h>
 #include <systick.h>
 
+#ifndef SYSTICK_DIVIDER
+#define SYSTICK_DIVIDER    1
+#endif
+
 static volatile int Sys_Tick;
 
 void SysTick_Handler(void)
@@ -11,7 +15,7 @@ void SysTick_Handler(void)
 
 void systick_start(unsigned int us)
 {
-        systick_set_reload(us * SYSTICK_MULTIPLIER);
+        systick_set_reload(us * SYSTICK_MULTIPLIER / SYSTICK_DIVIDER);
 
         systick_interrupt_enable();
         /* start counting */
