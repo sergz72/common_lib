@@ -51,7 +51,7 @@ unsigned char spi_byte(int channel, unsigned char data)
 }
 #endif
 
-void spi_command(int channel, unsigned char cmd, unsigned char *data_in, unsigned char *data_out, int count, int set_cs)
+void spi_command(int channel, unsigned char cmd, const unsigned char *data_in, unsigned char *data_out, int count, int set_cs)
 {
   char data;
 
@@ -70,7 +70,7 @@ void spi_command(int channel, unsigned char cmd, unsigned char *data_in, unsigne
     SPI_CS_SET(channel); // set CS
 }
 
-void spi_transfer(int channel, unsigned char *data_in, unsigned char *data_out, int count, int set_cs)
+void spi_transfer(int channel, const unsigned char *data_in, unsigned char *data_out, int count, int set_cs)
 {
   char data;
 

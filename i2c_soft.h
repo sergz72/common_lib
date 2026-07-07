@@ -9,6 +9,9 @@ unsigned int i2c_soft_tx(int channel, unsigned char d, unsigned int timeout);
 int i2c_soft_command(int channel, unsigned int address, const unsigned char *commands,  unsigned int commands_length,
                      const unsigned char *out_data, unsigned int out_data_length,
                      unsigned char in_data[], unsigned int in_data_length, unsigned int timeout);
-int i2c_soft_read(int channel, unsigned int address, unsigned char *in_data, unsigned int in_data_length, unsigned int timeout);
+int i2c_soft_read(int channel, unsigned int address, unsigned char *in_data, unsigned int in_data_length,
+                  unsigned int timeout);
+int i2c_soft_write(int channel, unsigned int address, const unsigned char *out_data, unsigned int out_data_length,
+                   bool ignore_nack, unsigned int timeout);
 
 #endif

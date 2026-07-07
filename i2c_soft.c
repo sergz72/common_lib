@@ -191,4 +191,31 @@ int i2c_soft_command(int channel, unsigned int address, const unsigned char *com
 
   return 0;
 }
+
+int i2c_soft_write(int channel, unsigned int address, const unsigned char *out_data, unsigned int out_data_length,
+                     bool ignore_nack, unsigned int timeout)
+{
+  unsigned int i;
+  unsigned char c;
+
+  i2c_soft_start(channel);              // send start sequence
+  if (i2c_soft_tx(channel, address, timeout)) // no ack
+  {
+    i2c_soft_stop(channel);
+    return 1;
+  }
+
+  for (i = 0; i < out_data_length; i++)
+  {
+    if (!ignore_nack && i2c_soft_tx(channel, out_data[i], timeout))
+    {
+      i2c_soft_stop(channel);
+      return 2;
+    }
+  }
+
+  i2c_soft_stop(channel);               // send stop sequence
+
+  return 0;
+}
 #endif
