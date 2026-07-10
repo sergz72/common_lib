@@ -14,7 +14,6 @@ typedef struct
 extern "C" {
 #endif
 
-int scd4x_command(const unsigned char *wdata, unsigned int wlen, unsigned char *rdata, unsigned int rlen); // should be defined in hal.c
 int scd4x_write(const unsigned char *data, unsigned int len, bool no_ack_expected); // should be defined in hal.c
 int scd4x_read(unsigned char *data, unsigned int len); // should be defined in hal.c
 
