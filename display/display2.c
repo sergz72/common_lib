@@ -1,6 +1,5 @@
 #include "board.h"
 #include <display2.h>
-#include <spi_lcd_common.h>
 #include <string.h>
 
 typedef struct
