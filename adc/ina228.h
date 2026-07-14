@@ -26,6 +26,29 @@ typedef union {
   } bits;
 } INA228AdcConfig;
 
+typedef union {
+  unsigned short raw;
+  struct
+  {
+    unsigned short memstat:1;
+    unsigned short cnvrf:1;
+    unsigned short pol:1;
+    unsigned short busul:1;
+    unsigned short busol:1;
+    unsigned short shuntul:1;
+    unsigned short shuntol:1;
+    unsigned short tmpol:1;
+    unsigned short reserved:1;
+    unsigned short mathof:1;
+    unsigned short chargeof:1;
+    unsigned short energyof:1;
+    unsigned short apol:1;
+    unsigned short showalert:1;
+    unsigned short cnvr:1;
+    unsigned short alatch:1;
+  } bits;
+} INA228DiagAlert;
+
 #define INA228_MODE_POWERDOWN 0
 #define INA228_MODE_BUS_TRIG 1
 #define INA228_MODE_SHUNT_TRIG 2
@@ -81,18 +104,20 @@ typedef union {
 #define INA228_REG_MANUFACTURER_ID 0x3E
 #define INA228_REG_DEVICE_ID 0x3F
 
+int ina228ReadRegister16(int channel, unsigned char address, unsigned char reg, unsigned short *data); // should be defined in hal.c
+int ina228WriteRegister16(int channel, unsigned char address, unsigned char reg, unsigned short data); // should be defined in hal.c
+int ina228ReadRegister24(int channel, unsigned char address, unsigned char reg, unsigned int *data); // should be defined in hal.c
+int ina228WriteRegister24(int channel, unsigned char address, unsigned char reg, unsigned int data); // should be defined in hal.c
 
-int ina228ReadRegister16(int channel, unsigned char address, unsigned char reg, unsigned short *data);
-int ina228WriteRegister16(int channel, unsigned char address, unsigned char reg, unsigned short data);
-int ina228ReadRegister24(int channel, unsigned char address, unsigned char reg, unsigned int *data);
-int ina228WriteRegister24(int channel, unsigned char address, unsigned char reg, unsigned int data);
 int ina228SetConfig(int channel, unsigned char address, INA228Config cfg);
 int ina228SetAdcConfig(int channel, unsigned char address, INA228AdcConfig cfg);
+int ina228SetDiagAlertConfig(int channel, unsigned char address, INA228DiagAlert cfg);
 // bus voltage is in uV
 int ina228GetBusVoltage(int channel, unsigned char address, int *voltage);
 // shunt current is in nA, R is in mOhm
 int ina228GetShuntCurrent(int channel, unsigned char address, int R, int *current);
 // temperature in mgrdC
 int ina228GetTemperature(int channel, unsigned char address, int *temperature);
+int ina228GetDiagAlert(int channel, unsigned char address, INA228DiagAlert *cfg);
 
 #endif

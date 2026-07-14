@@ -14,6 +14,16 @@ int ina228SetAdcConfig(int channel, unsigned char address, const INA228AdcConfig
   return ina228WriteRegister16(channel, address, INA228_REG_ADC_CONFIG, cfg.raw);
 }
 
+int ina228SetDiagAlertConfig(int channel, unsigned char address, INA228DiagAlert cfg)
+{
+  return ina228WriteRegister16(channel, address, INA228_REG_DIAG_ALRT, cfg.raw);
+}
+
+int ina228GetDiagAlert(int channel, unsigned char address, INA228DiagAlert *cfg)
+{
+  return ina228ReadRegister16(channel, address, INA228_REG_DIAG_ALRT, &cfg->raw);
+}
+
 int ina228GetBusVoltage(int channel, unsigned char address, int *voltage)
 {
   int v;
