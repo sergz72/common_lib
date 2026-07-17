@@ -7,6 +7,7 @@ int cc1101Send(unsigned char host_address, unsigned char *data, unsigned char le
 int cc1101ReceiveStart(void);
 int cc1101ReceiveStop(void);
 int cc1101PowerDown(void);
+int cc1101XOff(void);
 
 extern volatile int packet_received;
 

@@ -82,6 +82,12 @@ int cc1101PowerDown(void)
   return cc1101_strobe(0, CC1101_STROBE_SPWD, &status);
 }
 
+int cc1101XOff(void)
+{
+  unsigned char status;
+  return cc1101_strobe(0, CC1101_STROBE_SXOFF, &status);
+}
+
 int cc1101Receive(unsigned char **buffer, unsigned char *size)
 {
   unsigned char status;

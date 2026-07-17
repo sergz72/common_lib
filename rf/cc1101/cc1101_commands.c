@@ -68,6 +68,18 @@ static const ShellCommand power_down_command = {
   nullptr
 };
 
+static int xoff_handler(printf_func pfunc, gets_func gfunc, int argc, char **argv, void *data);
+static const ShellCommandItem xoff_command_items[] = {
+  {nullptr, nullptr, xoff_handler}
+};
+static const ShellCommand xoff_command = {
+  xoff_command_items,
+  "cc1101_xoff",
+  "cc1101_xoff",
+  nullptr,
+  nullptr
+};
+
 static int send_handler(printf_func pfunc, gets_func gfunc, int argc, char **argv, void *data);
 static const ShellCommandItem send_command_items[] = {
   {nullptr, param_handler, nullptr}, // address
@@ -118,6 +130,11 @@ static int receive_stop_handler(printf_func pfunc, gets_func gfunc, int argc, ch
 }
 
 static int power_down_handler(printf_func pfunc, gets_func gfunc, int argc, char **argv, void *data)
+{
+  return cc1101PowerDown();
+}
+
+static int xoff_handler(printf_func pfunc, gets_func gfunc, int argc, char **argv, void *data)
 {
   return cc1101PowerDown();
 }
@@ -179,4 +196,5 @@ void register_cc1101_commands(void)
   shell_register_command(&receive_start_command);
   shell_register_command(&receive_stop_command);
   shell_register_command(&power_down_command);
+  shell_register_command(&xoff_command);
 }
