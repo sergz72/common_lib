@@ -30,6 +30,15 @@ int pcf8563_get_status(unsigned char *status)
 {
   unsigned char reg;
 
+  reg = PCF8563_REG_CONTROL_STATUS1;
+
+  return i2c_pcf8563_transfer(&reg, 1, status, 1);
+}
+
+int pcf8563_get_status2(unsigned char *status)
+{
+  unsigned char reg;
+
   reg = PCF8563_REG_CONTROL_STATUS2;
 
   return i2c_pcf8563_transfer(&reg, 1, status, 1);

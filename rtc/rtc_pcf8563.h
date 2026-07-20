@@ -53,6 +53,7 @@ typedef struct
 
 int pcf8563_init(unsigned char clkout);
 int pcf8563_get_status(unsigned char *status);
+int pcf8563_get_status2(unsigned char *status);
 int pcf8563_stop(void);
 int pcf8563_start(void);
 int pcf8563_get(rtc_data *data);
