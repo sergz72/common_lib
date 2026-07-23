@@ -3,8 +3,8 @@
 #include <cc1101_func.h>
 #include <string.h>
 
-static unsigned char rxdata[64];
-static unsigned char txdata[64];
+static unsigned char rxdata[CC1101_MAX_PACKET_LENGTH];
+static unsigned char txdata[CC1101_MAX_PACKET_LENGTH];
 
 static cc1101_cfg cfgDevice = {
   CC1101_RX_ATTENUATION_0DB,
@@ -21,7 +21,7 @@ static cc1101_cfg cfgDevice = {
   0,
   0,
   0,
-  RF_MODE,
+  CC1101_MODE_GFSK_600,
   0,
   CC1101_SYNC_MODE_3032,
   0,
@@ -36,12 +36,37 @@ static cc1101_cfg cfgDevice = {
   CC1101_PO_TIMEOUT_150US,
   0,
   0,
-  TX_POWER
+  CC1101_TX_POWER_M30_433
 };
 
-int cc1101Init(unsigned char device_address, unsigned char packet_length, unsigned int frequency)
+bool cc1101ValidateMode(unsigned char rf_mode)
+{
+  return rf_mode <= CC1101_MODE_MAX;
+}
+
+bool cc1101ValidateFrequency(unsigned int frequency)
+{
+  return (frequency >= 430000 && frequency <= 439999) || (frequency >= 863000 && frequency <= 869999);
+}
+
+bool cc1101ValidatePower(unsigned char tx_power)
+{
+  return tx_power <= CC1101_TX_POWER_10_433 && tx_power >= CC1101_TX_POWER_M30_868;
+}
+
+int cc1101Init(unsigned char device_address, unsigned char packet_length, unsigned int frequency, unsigned char rf_mode,
+               unsigned char tx_power)
 {
   unsigned char status;
+
+  if (!cc1101ValidateFrequency(frequency))
+    return 1;
+  if (packet_length == 0 || packet_length > CC1101_MAX_PACKET_LENGTH)
+    return 2;
+  if (!cc1101ValidateMode(rf_mode))
+    return 3;
+  if (!cc1101ValidatePower(tx_power))
+    return 4;
 
   int rc = cc1101_strobe(0, CC1101_STROBE_SRES, &status);
   if (rc)
@@ -54,6 +79,8 @@ int cc1101Init(unsigned char device_address, unsigned char packet_length, unsign
   cfgDevice.address = device_address;
   cfgDevice.packetLength = packet_length;
   cfgDevice.freq = frequency;
+  cfgDevice.mode = rf_mode;
+  cfgDevice.txPower = tx_power;
   rc = cc1101_Init(0, &cfgDevice);
   if (rc)
     return rc;

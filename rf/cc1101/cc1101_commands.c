@@ -5,6 +5,8 @@
 #include <read_hex_string.h>
 #include <string.h>
 
+#include "cc1101.h"
+
 static int init_handler(printf_func pfunc, gets_func gfunc, int argc, char **argv, void *data);
 static const ShellCommandItem init_command_items[] = {
   {nullptr, param_handler, nullptr}, // address
@@ -111,12 +113,7 @@ static int init_handler(printf_func pfunc, gets_func gfunc, int argc, char **arg
     return 2;
   }
   int frequency = atoi(argv[2]);
-  if (!(frequency >= 430000 && frequency <= 439999) && !(frequency >= 863000 && frequency <= 869999))
-  {
-    pfunc("Invalid frequency\n");
-    return 2;
-  }
-  return cc1101Init(host_address, packet_length, frequency);
+  return cc1101Init(host_address, packet_length, frequency, CC1101_MODE_GFSK_600, CC1101_TX_POWER_M30_433);
 }
 
 static int receive_start_handler(printf_func pfunc, gets_func gfunc, int argc, char **argv, void *data)
