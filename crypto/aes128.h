@@ -19,7 +19,7 @@
  * @purpose:            Key schedule for AES-128
  * @par[in]key:         16 bytes of master keys
  */
-void aes128_set_key(const unsigned char *key);
+void aes128_set_key(unsigned int key_id, const unsigned char *key);
 
 /**
  * @purpose:            Encryption. The length of plain and cipher should be one block (16 bytes).
@@ -27,7 +27,7 @@ void aes128_set_key(const unsigned char *key);
  * @par[in]plaintext:   plain text
  * @par[out]ciphertext: cipher text
  */
-void aes128_encrypt(unsigned char *ciphertext, const unsigned char *plaintext);
+void aes128_encrypt(unsigned int key_id, unsigned char *ciphertext, const unsigned char *plaintext);
 
 /**
  * @purpose:            Decryption. The length of plain and cipher should be one block (16 bytes).
@@ -35,6 +35,6 @@ void aes128_encrypt(unsigned char *ciphertext, const unsigned char *plaintext);
  * @par[in]ciphertext:  cipher text
  * @par[out]plaintext:  plain text
  */
-void aes128_decrypt(unsigned char *plaintext, const unsigned char *ciphertext);
+void aes128_decrypt(unsigned int key_id, unsigned char *plaintext, const unsigned char *ciphertext);
 
 #endif

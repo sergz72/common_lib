@@ -13,6 +13,4 @@ bool cc1101ValidatePower(unsigned char tx_power);
 bool cc1101ValidateFrequency(unsigned int frequency);
 bool cc1101ValidateMode(unsigned char rf_mode);
 
-extern volatile int packet_received;
-
 #endif

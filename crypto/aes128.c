@@ -11,12 +11,13 @@
  * Updated in Jan 2017, update muliple function on GF(2^8).
  *
  */
+#include "board.h"
 #include <aes128.h>
 
 #define AES_ROUNDS          10  // 12, 14
 #define AES_ROUND_KEY_SIZE  176 // AES-128 has 10 rounds, and there is a AddRoundKey before first round. (10+1)x16=176.
 
-static unsigned char round_keys[AES_ROUND_KEY_SIZE];
+static unsigned char round_keys[AES128_MAX_KEYS][AES_ROUND_KEY_SIZE];
 
 /*
  * round constants
@@ -141,13 +142,13 @@ static void inv_shift_rows(unsigned char *state)
     *(state+15) = temp;
 }
 
-void aes128_set_key(const unsigned char *key)
+void aes128_set_key(unsigned int key_id, const unsigned char *key)
 {
     unsigned char temp[4];
     unsigned char *last4bytes; // point to the last 4 bytes of one round
     unsigned char *lastround;
     unsigned char i;
-    unsigned char *roundkeys = round_keys;
+    unsigned char *roundkeys = round_keys[key_id];
 
     for (i = 0; i < 16; ++i) {
         *roundkeys++ = *key++;
@@ -184,11 +185,11 @@ void aes128_set_key(const unsigned char *key)
     }
 }
 
-void aes128_encrypt(unsigned char *ciphertext, const unsigned char *plaintext) {
+void aes128_encrypt(unsigned int key_id, unsigned char *ciphertext, const unsigned char *plaintext) {
 
     unsigned char tmp[16], t;
     unsigned char i, j;
-    unsigned char *roundkeys = round_keys;
+    unsigned char *roundkeys = round_keys[key_id];
 
     // first AddRoundKey
     for ( i = 0; i < AES_BLOCK_SIZE; ++i ) {
@@ -236,12 +237,12 @@ void aes128_encrypt(unsigned char *ciphertext, const unsigned char *plaintext) {
 
 }
 
-void aes128_decrypt(unsigned char *plaintext, const unsigned char *ciphertext)
+void aes128_decrypt(unsigned int key_id, unsigned char *plaintext, const unsigned char *ciphertext)
 {
     unsigned char tmp[16];
     unsigned char t, u, v;
     unsigned char i, j;
-    unsigned char *roundkeys = round_keys;
+    unsigned char *roundkeys = round_keys[key_id];
 
     roundkeys += 160;
 
