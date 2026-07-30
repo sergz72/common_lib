@@ -1,7 +1,5 @@
 #include <queue.h>
 
-#define NULL 0
-
 void queue_init(Queue *q, unsigned int size, unsigned int buffer_size, unsigned char *buffer, unsigned int *message_size_array)
 {
   q->size = size;
@@ -17,7 +15,7 @@ unsigned char *queue_poll(Queue *q, unsigned int *message_size)
   unsigned int newHead;
 
   if (q->rx_head == q->tx_head)
-    return NULL;
+    return nullptr;
 
   newHead = q->rx_head;
   result = &q->buffer[newHead * q->buffer_size];

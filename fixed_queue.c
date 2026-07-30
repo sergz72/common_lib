@@ -1,7 +1,7 @@
 #include <string.h>
 #include <fixed_queue.h>
 
-void queue_init(Queue* q, int size, int item_length, char* buffer)
+void fixed_queue_init(FixedQueue* q, int size, int item_length, char* buffer)
 {
   q->size = size;
   q->item_length = item_length;
@@ -9,19 +9,19 @@ void queue_init(Queue* q, int size, int item_length, char* buffer)
   q->current = q->first = 0;
 }
 
-void queue_reset(Queue* q)
+void fixed_queue_reset(FixedQueue* q)
 {
   q->current = q->first = 0;
 }
 
-void *queue_peek(Queue* q)
+void *fixed_queue_peek(FixedQueue* q)
 {
   if (q->current != q->first)
     return q->buffer + q->first * q->item_length;
   return NULL;
 }
 
-void queue_pop(Queue* q)
+void fixed_queue_pop(FixedQueue* q)
 {
   if (q->first != q->current)
   {
@@ -31,7 +31,7 @@ void queue_pop(Queue* q)
   }
 }
 
-void queue_push(Queue* q, void *data)
+void fixed_queue_push(FixedQueue* q, void *data)
 {
   memcpy(q->buffer + q->item_length * q->current++, data, q->item_length);
   if (q->current >= q->size)
@@ -44,9 +44,9 @@ void queue_push(Queue* q, void *data)
   }
 }
 
-void queue_move_to_top(Queue* q, int offset, void *buffer)
+void fixed_queue_move_to_top(FixedQueue* q, int offset, void *buffer)
 {
-  if (offset <= 0 || offset > queue_size(q) - 1)
+  if (offset <= 0 || offset > fixed_queue_size(q) - 1)
     return;
   int top = q->current - 1;
   if (top < 0)
@@ -66,9 +66,9 @@ void queue_move_to_top(Queue* q, int offset, void *buffer)
   memcpy(q->buffer + top * q->item_length, buffer, q->item_length);
 }
 
-int queue_get_index(Queue* q, void *data, int (*cmp)(void*, void*))
+int fixed_queue_get_index(FixedQueue* q, void *data, int (*cmp)(void*, void*))
 {
-  int size = queue_size(q);
+  int size = fixed_queue_size(q);
   int idx = q->current - 1;
   if (idx < 0)
     idx += q->size;
@@ -86,16 +86,16 @@ int queue_get_index(Queue* q, void *data, int (*cmp)(void*, void*))
   return -1;
 }
 
-int queue_size(Queue* q)
+int fixed_queue_size(FixedQueue* q)
 {
   if (q->current >= q->first)
     return q->current - q->first;
   return q->size - q->first + q->current;
 }
 
-void *queue_peekn(Queue* q, int offset)
+void *fixed_queue_peekn(FixedQueue* q, int offset)
 {
-  if (offset < 0 || offset > queue_size(q) - 1)
+  if (offset < 0 || offset > fixed_queue_size(q) - 1)
     return NULL;
   offset = q->current - offset - 1;
   if (offset < 0)

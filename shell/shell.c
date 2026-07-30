@@ -14,7 +14,7 @@ static gets_func gfunc;
 #ifdef SHELL_HISTORY_SIZE
 static char history[SHELL_HISTORY_ITEM_LENGTH*SHELL_HISTORY_SIZE];
 static char history_temp[SHELL_HISTORY_ITEM_LENGTH];
-static Queue history_q;
+static FixedQueue history_q;
 static int history_offset;
 #endif
 
@@ -37,7 +37,7 @@ void shell_init(printf_func _pfunc, gets_func _gfunc)
     argv[i] = argvv[i];
 
 #ifdef SHELL_HISTORY_SIZE
-  queue_init(&history_q, SHELL_HISTORY_SIZE, SHELL_HISTORY_ITEM_LENGTH, history);
+  fixed_queue_init(&history_q, SHELL_HISTORY_SIZE, SHELL_HISTORY_ITEM_LENGTH, history);
   history_offset = 0;
 #endif
 }
@@ -168,11 +168,11 @@ int shell_execute(const char *command)
   }*/
 
 #ifdef SHELL_HISTORY_SIZE
-  int idx = queue_get_index(&history_q, (void*)command, (int (*)(void*, void*))strcmp);
+  int idx = fixed_queue_get_index(&history_q, (void*)command, (int (*)(void*, void*))strcmp);
   if (idx < 0)
-    queue_push(&history_q, (void*)command);
+    fixed_queue_push(&history_q, (void*)command);
   else
-    queue_move_to_top(&history_q, idx, history_temp);
+    fixed_queue_move_to_top(&history_q, idx, history_temp);
   history_offset = 0;
 
 
@@ -243,9 +243,9 @@ int shell_execute(const char *command)
 const char *shell_get_prev_from_history(void)
 {
 #ifdef SHELL_HISTORY_SIZE
-  int s = queue_size(&history_q);
+  int s = fixed_queue_size(&history_q);
   if (history_offset < s)
-    return queue_peekn(&history_q, history_offset++);
+    return fixed_queue_peekn(&history_q, history_offset++);
   return NULL;
 #else
   return NULL;
@@ -258,7 +258,7 @@ const char *shell_get_next_from_history(void)
   if (history_offset)
   {
     history_offset--;
-    return queue_peekn(&history_q, history_offset);
+    return fixed_queue_peekn(&history_q, history_offset);
   }
   return NULL;
 #else

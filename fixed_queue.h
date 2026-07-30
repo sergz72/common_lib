@@ -4,16 +4,16 @@
 typedef struct {
   int size, item_length, current, first;
   char* buffer;
-} Queue;
+} FixedQueue;
 
-void queue_init(Queue *q, int size, int item_length, char *buffer);
-void *queue_peek(Queue* q);
-void queue_pop(Queue* q);
-void queue_push(Queue* q, void *data);
-void queue_reset(Queue* q);
-int queue_size(Queue* q);
-void *queue_peekn(Queue* q, int offset);
-int queue_get_index(Queue* q, void *data, int (*cmp)(void*, void*));
-void queue_move_to_top(Queue* q, int offset, void *buffer);
+void fixed_queue_init(FixedQueue *q, int size, int item_length, char *buffer);
+void *fixed_queue_peek(FixedQueue* q);
+void fixed_queue_pop(FixedQueue* q);
+void fixed_queue_push(FixedQueue* q, void *data);
+void fixed_queue_reset(FixedQueue* q);
+int fixed_queue_size(FixedQueue* q);
+void *fixed_queue_peekn(FixedQueue* q, int offset);
+int fixed_queue_get_index(FixedQueue* q, void *data, int (*cmp)(void*, void*));
+void fixed_queue_move_to_top(FixedQueue* q, int offset, void *buffer);
 
 #endif //MAIN_FIXED_QUEUE_H
