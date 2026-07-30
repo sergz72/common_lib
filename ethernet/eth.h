@@ -39,6 +39,7 @@ int ethernet_packet_send(const ETH_Header *buff, unsigned int length);
 void print_ipv6_raw(const char *title, const unsigned char *ip);
 void ETH_Set_Prefix(const unsigned char *prefix, unsigned char prefix_length, const unsigned char *router_mac);
 void ETH_Init(const unsigned char *mac, int printf_func ( const char * format, ... ), bool debug);
+void eth_set_prefix_callback(void);
 
 static inline bool ETH_IPV6_Compare(const ETH_IPV6_Address *ip1, const ETH_IPV6_Address *ip2)
 {

@@ -13,6 +13,7 @@ add_executable(ethernet_library_test
         ../../my/Programs/common_lib/ethernet/eth_udp.c
         ../../my/Programs/common_lib/ethernet/eth_queue.c
         ../../my/Programs/common_lib/ethernet/eth_ndp.c
+        ../../my/Programs/common_lib/ethernet/eth_ntp.c
 )
 
 include_directories(. ../../my/Programs/common_lib ../../my/Programs/common_lib/crypto ../../my/Programs/common_lib/ethernet)

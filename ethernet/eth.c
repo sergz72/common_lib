@@ -3,8 +3,8 @@
 #include <string.h>
 #include <eth_queue.h>
 #include <eth_ndp.h>
-#include <stdio.h>
 #include <trng.h>
+#include <eth_ntp.h>
 
 static const unsigned char multicast_ipv6_mac_address[6] = { 0x33, 0x33, 0, 0, 0, 1 };
 
@@ -19,6 +19,7 @@ void ETH_Init(const unsigned char *mac, int printf_func ( const char * format, .
   trng_generate((unsigned int*)&eth_instance.ipv6_address, 4);
   ETH_QueueInit();
   ETH_InitNdpTable();
+  ETH_NTP_Init();
 }
 
 void ethernet_packet_received(const void *buffer, const unsigned int length)
@@ -53,7 +54,9 @@ void ETH_Set_Prefix(const unsigned char *prefix, unsigned char prefix_length, co
     return;
   memcpy(&eth_instance.router_mac_address, router_mac, 6);
   memcpy(current_ip, prefix, prefix_length);
-  print_ipv6_raw("My IP", current_ip, printf);
+  if (eth_instance.debug)
+    print_ipv6_raw("My IP", current_ip);
+  eth_set_prefix_callback();
 }
 
 void print_ipv6_raw(const char *title, const unsigned char *ip)

@@ -10,6 +10,7 @@
 #include <eth.h>
 #include <eth_queue.h>
 #include <stdlib.h>
+#include <eth_ntp.h>
 
 #define IPV6_PROTOCOL 0x86DD
 #define BUF_SIZ		    2048
@@ -35,6 +36,12 @@ int ethernet_packet_send(const ETH_Header *buff, unsigned int length)
   socket_address.sll_addr[5] = buff->dest_addr[5];
 
   return sendto(sockfd_sender, buff, length, 0, (struct sockaddr*)&socket_address, sizeof(struct sockaddr_ll)) == -1 ? -1 : 0;
+}
+
+void eth_set_prefix_callback(void)
+{
+  if (!ntp_time_is_set)
+    ETH_NTP_Send_Timestamp_Request();
 }
 
 int main(int argc, char **argv)
