@@ -28,6 +28,7 @@ typedef struct
   unsigned char mac_address[6];
   unsigned char router_mac_address[6];
   ETH_IPV6_Address ipv6_address;
+  ETH_IPV6_Address ntp_server_address;
   int (*printf_func)(const char * format, ...);
   bool debug;
 } ETH_Instance;
@@ -38,8 +39,9 @@ void ethernet_packet_received(const void *buffer, unsigned int length);
 int ethernet_packet_send(const ETH_Header *buff, unsigned int length);
 void print_ipv6_raw(const char *title, const unsigned char *ip);
 void ETH_Set_Prefix(const unsigned char *prefix, unsigned char prefix_length, const unsigned char *router_mac);
-void ETH_Init(const unsigned char *mac, int printf_func ( const char * format, ... ), bool debug);
+int ETH_Init(const unsigned char *mac, const unsigned char *ntp_server_address, int printf_func ( const char * format, ... ), bool debug);
 void eth_set_prefix_callback(void);
+int ETH_Parse_IPV6(const unsigned char *address, ETH_IPV6_Address *result);
 
 static inline bool ETH_IPV6_Compare(const ETH_IPV6_Address *ip1, const ETH_IPV6_Address *ip2)
 {
@@ -60,6 +62,11 @@ static inline bool ETH_IPV6_IsZero(const ETH_IPV6_Address *addr)
 static inline unsigned short ETH_SwapShort(const unsigned short v)
 {
   return __builtin_bswap16(v);
+}
+
+static inline unsigned int ETH_SwapInt(const unsigned int v)
+{
+  return __builtin_bswap32(v);
 }
 
 extern ETH_Instance eth_instance;

@@ -46,9 +46,9 @@ void eth_set_prefix_callback(void)
 
 int main(int argc, char **argv)
 {
-  if (argc != 3)
+  if (argc != 4)
   {
-    printf("Usage: ethernet_library_test interface_name mac_address");
+    printf("Usage: ethernet_library_test interface_name mac_address ntp_server_address");
     return 1;
   }
   int sockfd_listener;
@@ -114,7 +114,7 @@ int main(int argc, char **argv)
 
   unsigned long long int m = strtoull(argv[2], nullptr, 16);
   printf("My MAC: 0x%llx\n", m);
-  ETH_Init((const unsigned char*)&m, printf, true);
+  ETH_Init((const unsigned char*)&m, argv[3], printf, true);
 
   const struct ether_header *eh = (const struct ether_header *)buf;
 
