@@ -6,6 +6,7 @@ set(CMAKE_C_STANDARD 23)
 add_executable(ethernet_library_test
         main.c
         trng.c
+        tests.c
         ../../my/Programs/common_lib/queue.c
         ../../my/Programs/common_lib/ethernet/eth.c
         ../../my/Programs/common_lib/ethernet/eth_ipv6.c

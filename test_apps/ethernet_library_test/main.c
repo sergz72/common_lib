@@ -11,6 +11,7 @@
 #include <eth_queue.h>
 #include <stdlib.h>
 #include <eth_ntp.h>
+#include <tests.h>
 
 #define IPV6_PROTOCOL 0x86DD
 #define BUF_SIZ		    2048
@@ -44,13 +45,34 @@ void eth_set_prefix_callback(void)
     ETH_NTP_Send_Timestamp_Request();
 }
 
+void ntp_time_received_callback(unsigned int unix_time)
+{
+  printf("Unix time from a NTP server is %u\n", unix_time);
+}
+
 int main(int argc, char **argv)
 {
+  if (argc == 2 && !strcmp(argv[1], "test"))
+    return run_tests();
   if (argc != 4)
   {
     printf("Usage: ethernet_library_test interface_name mac_address ntp_server_address");
     return 1;
   }
+
+  unsigned char ntp_server_address[16];
+  if (ETH_Parse_IPV6(argv[3], ntp_server_address))
+  {
+    printf("ntp server address parsing error");
+    return 1;
+  }
+
+  unsigned long long int m = strtoull(argv[2], nullptr, 16);
+  printf("My MAC: 0x%llx\n", m);
+  ETH_Init((const unsigned char*)&m, ntp_server_address, printf, true);
+
+  print_ipv6_raw("NTP server address", (const unsigned char*)&ntp_server_address);
+
   int sockfd_listener;
   struct ifreq if_mac;
   struct ifreq ifopts;	/* set promiscuous mode */
@@ -111,10 +133,6 @@ int main(int argc, char **argv)
     close(sockfd_listener);
     return 7;
   }
-
-  unsigned long long int m = strtoull(argv[2], nullptr, 16);
-  printf("My MAC: 0x%llx\n", m);
-  ETH_Init((const unsigned char*)&m, argv[3], printf, true);
 
   const struct ether_header *eh = (const struct ether_header *)buf;
 
