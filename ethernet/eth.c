@@ -8,18 +8,15 @@
 #include <stdlib.h>
 
 static const unsigned char multicast_ipv6_mac_address[6] = { 0x33, 0x33, 0, 0, 0, 1 };
+const unsigned char zero_ipv6_address[16] = {0};
 
 ETH_Instance eth_instance;
 
-int ETH_Init(const unsigned char *mac, const unsigned char *ntp_server_address, int printf_func ( const char * format, ... ), bool debug)
+void ETH_Init(const unsigned char *mac, const unsigned char *ntp_server_address, int printf_func ( const char * format, ... ), bool debug)
 {
   memset(&eth_instance, 0, sizeof(ETH_Instance));
   if (ntp_server_address)
-  {
-    const int rc = ETH_Parse_IPV6(ntp_server_address, &eth_instance.ntp_server_address);
-    if (rc)
-      return rc;
-  }
+    memcpy(&eth_instance.ntp_server_address, ntp_server_address, 16);
   eth_instance.debug = debug;
   eth_instance.printf_func = printf_func;
   memcpy(eth_instance.mac_address, mac, 6);
@@ -27,10 +24,9 @@ int ETH_Init(const unsigned char *mac, const unsigned char *ntp_server_address, 
   ETH_QueueInit();
   ETH_InitNdpTable();
   ETH_NTP_Init();
-  return 0;
 }
 
-int ETH_Parse_IPV6(const unsigned char *address, ETH_IPV6_Address *result)
+int ETH_Parse_IPV6(const unsigned char *address, unsigned char *result)
 {
   unsigned short ip_address[8] = {0};
   int i;
@@ -45,9 +41,9 @@ int ETH_Parse_IPV6(const unsigned char *address, ETH_IPV6_Address *result)
       break;
     if (*end != ':')
       return 2;
-    address = end;
+    address = end + 1;
   }
-  if (i < 8)
+  if (i != 7)
     return 3;
   memcpy(result, ip_address, 16);
   return 0;

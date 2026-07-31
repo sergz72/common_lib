@@ -48,7 +48,7 @@ typedef struct __attribute__((packed))
   RouterAnnouncementOptionHeader option_header;
   unsigned short reserved;       /* Reserved / padding field */
   unsigned int   lifetime;       /* DNS server lifetime in seconds */
-  ETH_IPV6_Address dns_server;   /* IPv6 address of the DNS server */
+  unsigned char dns_server[16];   /* IPv6 address of the DNS server */
 } RouterAnnouncementDnsInfo;
 
 #define ROUTER_ANNOUNCEMENT_MTU 5
@@ -115,13 +115,12 @@ void ETH_ICMPV6_Handler(const ETH_ICMPV6_FullHeader *icmp_hdr, unsigned int leng
     }
     header->eth_hdr.type = ETH_PROTOCOL_IPV6;
     header->ipv6_hdr.nextHeader = ETH_IPV6_NEXT_HEADER_UDP;
-    header->ipv6_hdr.version = 6;
+    header->ipv6_hdr.version_trafficClass_flowLabel_high = 0x60;
     header->ipv6_hdr.payloadLength = ETH_SwapShort(ETH_ICMPV6_HEADER_LENGTH);
-    header->ipv6_hdr.trafficClass = 0;
-    header->ipv6_hdr.flowLabel = 0;
+    header->ipv6_hdr.flowLabel_low = 0;
     header->ipv6_hdr.hopLimit = 255;
-    memcpy(&header->ipv6_hdr.destIP, &icmp_hdr->ipv6_hdr.destIP, sizeof(ETH_IPV6_Address));
-    memcpy(&header->ipv6_hdr.sourceIP, &eth_instance.ipv6_address, sizeof(ETH_IPV6_Address));
+    memcpy(header->ipv6_hdr.destIP, icmp_hdr->ipv6_hdr.destIP, 16);
+    memcpy(header->ipv6_hdr.sourceIP, eth_instance.ipv6_address, 16);
     header->icmpv6_hdr.type = ETH_ICMPV6_TYPE_ECHO_REPLY;
     header->icmpv6_hdr.code = 0;
     header->icmpv6_hdr.checksum = 0;

@@ -8,11 +8,8 @@
 void ETH_IPV6_MulticastHandler(const ETH_Header *eth_hdr, unsigned int length)
 {
   const ETH_IPV6_Header *ipv6_header = (const ETH_IPV6_Header *)((const unsigned char*)eth_hdr + ETH_HEADER_LENGTH);
-  ETH_IPV6_Addresses addresses;
 
-  memcpy(&addresses, &ipv6_header->sourceIP, sizeof(ETH_IPV6_Addresses));
-
-  ETH_UpdateNdpTable(&addresses.sourceIP, eth_hdr->src_addr);
+  ETH_UpdateNdpTable(ipv6_header->sourceIP, eth_hdr->src_addr);
 
   switch (ipv6_header->nextHeader)
   {
@@ -27,13 +24,10 @@ void ETH_IPV6_MulticastHandler(const ETH_Header *eth_hdr, unsigned int length)
 void ETH_IPV6_Handler(const ETH_Header *eth_hdr, unsigned int length)
 {
   const ETH_IPV6_Header *ipv6_header = (const ETH_IPV6_Header *)((const unsigned char*)eth_hdr + ETH_HEADER_LENGTH);
-  ETH_IPV6_Addresses addresses;
 
-  memcpy(&addresses, &ipv6_header->sourceIP, sizeof(ETH_IPV6_Addresses));
+  ETH_UpdateNdpTable(ipv6_header->sourceIP, eth_hdr->src_addr);
 
-  ETH_UpdateNdpTable(&addresses.sourceIP, eth_hdr->src_addr);
-
-  if (!ETH_IPV6_Compare(&addresses.destIP, &eth_instance.ipv6_address))
+  if (!memcmp(ipv6_header->destIP, eth_instance.ipv6_address, 16))
   {
     switch (ipv6_header->nextHeader)
     {

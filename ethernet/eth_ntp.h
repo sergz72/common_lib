@@ -1,8 +1,10 @@
 #ifndef _ETH_NTP_H
 #define _ETH_NTP_H
 
-#define NTP_PORT 123
-#define NTP_TIMESTAMP_DELTA 2208988800ULL // Seconds difference between 1900 and 1970
+#define NTP_PORT 123 // 0x7B
+#define NTP_PORT_REVERSED 0x7B00
+#define NTP_TIMESTAMP_DELTA 2208988800 // Seconds difference between 1900 and 1970 (0x83AA7E80)
+#define NTP_TIMESTAMP_DELTA_REVERSED 0x807EAA83
 
 // Structured layout matching the 48-byte NTP Header Specification
 typedef struct {
@@ -25,7 +27,8 @@ typedef struct {
 
 void ETH_NTP_Init(void);
 int ETH_NTP_Send_Timestamp_Request(void);
-void ETH_NTP_Process_Timestamp_Reply(const unsigned char *data);
+void ETH_NTP_Process_Timestamp_Reply(const void *data);
+void ntp_time_received_callback(unsigned int unix_time);
 
 extern bool ntp_time_is_set;
 

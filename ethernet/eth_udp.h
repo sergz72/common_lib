@@ -21,6 +21,7 @@ typedef struct __attribute__((__packed__))
 #define ETH_UDP_HEADER_LENGTH 8
 
 void ETH_UDP_Handler(const ETH_UDP_FullHeader *udp_hdr);
-int ETH_UDP_Send(unsigned short sourcePort, const ETH_IPV6_Address *destIP, unsigned short destPort, void *data, unsigned int data_length);
+int ETH_UDP_Send(unsigned short sourcePort, const unsigned char *destIP, unsigned short destPort, const void *data, unsigned int data_length);
+unsigned short ETH_UDP_ComputeChecksum(const ETH_UDP_FullHeader *header);
 
 #endif
