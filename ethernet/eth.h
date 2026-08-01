@@ -31,12 +31,13 @@ typedef struct
 #define ETH_HEADER_LENGTH 14
 
 void ethernet_packet_received(const void *buffer, unsigned int length);
-int ethernet_packet_send(const ETH_Header *buff, unsigned int length);
+int ethernet_packet_send(const void *buff, unsigned int length);
 void print_ipv6_raw(const char *title, const unsigned char *ip);
 void ETH_Set_Prefix(const unsigned char *prefix, unsigned char prefix_length, const unsigned char *router_mac);
-void ETH_Init(const unsigned char *mac, const unsigned char *ntp_server_address, int printf_func ( const char * format, ... ), bool debug);
+void ETH_Common_Init(const unsigned char *mac, const unsigned char *ntp_server_address, int printf_func ( const char * format, ... ), bool debug);
 void eth_set_prefix_callback(void);
 int ETH_Parse_IPV6(const unsigned char *address, unsigned char *result);
+unsigned int calculate_sum(const unsigned short *addr, unsigned int length);
 
 static inline unsigned short ETH_SwapShort(const unsigned short v)
 {

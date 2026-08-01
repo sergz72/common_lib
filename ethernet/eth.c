@@ -7,12 +7,11 @@
 #include <eth_ntp.h>
 #include <stdlib.h>
 
-static const unsigned char multicast_ipv6_mac_address[6] = { 0x33, 0x33, 0, 0, 0, 1 };
 const unsigned char zero_ipv6_address[16] = {0};
 
 ETH_Instance eth_instance;
 
-void ETH_Init(const unsigned char *mac, const unsigned char *ntp_server_address, int printf_func ( const char * format, ... ), bool debug)
+void ETH_Common_Init(const unsigned char *mac, const unsigned char *ntp_server_address, int printf_func ( const char * format, ... ), bool debug)
 {
   memset(&eth_instance, 0, sizeof(ETH_Instance));
   if (ntp_server_address)
@@ -63,7 +62,7 @@ void ethernet_packet_received(const void *buffer, const unsigned int length)
   switch (eth_hdr->type)
   {
     case ETH_PROTOCOL_IPV6:
-      if (!memcmp(eth_hdr->dest_addr, multicast_ipv6_mac_address, 6))
+      if (eth_hdr->dest_addr[0] == 0x33 && eth_hdr->dest_addr[1] == 0x33)
         ETH_IPV6_MulticastHandler(eth_hdr, length);
       else if (!memcmp(eth_hdr->dest_addr, eth_instance.mac_address, 6))
         ETH_IPV6_Handler(eth_hdr, length);
@@ -93,4 +92,21 @@ void print_ipv6_raw(const char *title, const unsigned char *ip)
          title,
          ip[0], ip[1], ip[2], ip[3], ip[4], ip[5], ip[6], ip[7],
          ip[8], ip[9], ip[10], ip[11], ip[12], ip[13], ip[14], ip[15]);
+}
+
+unsigned int calculate_sum(const unsigned short *addr, unsigned int length)
+{
+  unsigned int sum = 0;
+
+  while (length > 1)
+  {
+    sum += ETH_SwapShort(*addr++);
+    length -= 2;
+  }
+
+  // Handle an odd byte if present
+  if (length != 0)
+    sum += *(unsigned char *)addr << 8;
+
+  return sum;
 }

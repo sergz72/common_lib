@@ -4,6 +4,10 @@
 #include <stdio.h>
 #include <memory.h>
 
+#define NA_FLAG_ROUTER    (1U << 31)
+#define NA_FLAG_SOLICITED (1U << 30)
+#define NA_FLAG_OVERRIDE  (1U << 29)
+
 typedef struct
 {
   unsigned char option_code;
@@ -66,6 +70,34 @@ typedef struct __attribute__((packed))
   unsigned char  mac[6];           /* Router Link-Layer MAC address */
 } RouterAnnouncementSlla;
 
+typedef struct
+{
+  unsigned int reserved;    /* Reserved: Set to 0 */
+  unsigned char target[16]; /* Target IPv6 Address */
+} NeighborSolicitationPacket;
+
+typedef struct
+{
+  unsigned int flags;
+  unsigned char target[16];
+} NeighborAdvertisementPacket;
+
+typedef struct __attribute__((__packed__))
+{
+  ETH_Header eth_hdr;
+  ETH_IPV6_Header ipv6_hdr;
+  ETH_ICMPV6_Header icmpv6_hdr;
+  NeighborSolicitationPacket ns;
+} ETH_ICMPV6_NS_FullHeader;
+
+typedef struct __attribute__((__packed__))
+{
+  ETH_Header eth_hdr;
+  ETH_IPV6_Header ipv6_hdr;
+  ETH_ICMPV6_Header icmpv6_hdr;
+  NeighborAdvertisementPacket na;
+} ETH_ICMPV6_NA_FullHeader;
+
 static void parse_ra(const RouterAnnouncementOptionHeader *oh, int length, const unsigned char *source_mac)
 {
   while (length > 0)
@@ -86,9 +118,62 @@ static void parse_ra(const RouterAnnouncementOptionHeader *oh, int length, const
   }
 }
 
+unsigned short ETH_ICMPV6_ComputeChecksum(const ETH_ICMPV6_FullHeader *header)
+{
+  unsigned int sum = calculate_sum((unsigned short*)&header->ipv6_hdr.sourceIP, 32);
+  sum += ETH_IPV6_NEXT_HEADER_ICMPV6;
+  unsigned int l = ETH_SwapShort(header->ipv6_hdr.payloadLength);
+  sum += l;
+  sum += calculate_sum((unsigned short*)&header->icmpv6_hdr, l);
+
+  // Fold 32-bit sum to 16 bits
+  while (sum >> 16) {
+    sum = (sum & 0xFFFF) + (sum >> 16);
+  }
+
+  unsigned short checksum = (unsigned short)~sum;
+
+  // IPv6 UDP Rule: If checksum is 0, return 0xFFFF
+  if (checksum == 0) {
+    return 0xFFFF;
+  }
+
+  return ETH_SwapShort(checksum);
+}
+
+static void parse_ns(const ETH_ICMPV6_NS_FullHeader *ns)
+{
+  eth_instance.printf_func("Got a ns packet\n");
+  if (!memcmp(ns->ns.target, eth_instance.ipv6_address, 16))
+  {
+    eth_instance.printf_func("Sending na reply...\n");
+    ETH_ICMPV6_NA_FullHeader *header = (ETH_ICMPV6_NA_FullHeader *)queue_peekTx(&eth_irq_queue);
+    memcpy(header->eth_hdr.src_addr, eth_instance.mac_address, 6);
+    memcpy(header->eth_hdr.dest_addr, ns->eth_hdr.src_addr, 6);
+    header->eth_hdr.type = ETH_PROTOCOL_IPV6;
+    header->ipv6_hdr.nextHeader = ETH_IPV6_NEXT_HEADER_ICMPV6;
+    header->ipv6_hdr.version_trafficClass_flowLabel_high = 0x60;
+    header->ipv6_hdr.payloadLength = ETH_SwapShort(sizeof(NeighborAdvertisementPacket) + ETH_ICMPV6_HEADER_LENGTH);
+    header->ipv6_hdr.flowLabel_low = 0;
+    header->ipv6_hdr.hopLimit = 255;
+    memcpy(header->ipv6_hdr.destIP, ns->ipv6_hdr.sourceIP, 16);
+    memcpy(header->ipv6_hdr.sourceIP, eth_instance.ipv6_address, 16);
+    header->icmpv6_hdr.type = ETH_ICMPV6_TYPE_NA;
+    header->icmpv6_hdr.code = 0;
+    header->icmpv6_hdr.checksum = 0;
+    header->na.flags = NA_FLAG_SOLICITED | NA_FLAG_OVERRIDE;
+    memcpy(header->na.target, ns->ns.target, 16);
+
+    header->icmpv6_hdr.checksum =
+      ETH_ICMPV6_ComputeChecksum((const ETH_ICMPV6_FullHeader *)header);
+    
+    queue_add(&eth_irq_queue, sizeof(ETH_ICMPV6_NS_FullHeader));
+  }
+}
+
 void ETH_ICMPV6_MulticastHandler(const ETH_ICMPV6_FullHeader *icmp_hdr, unsigned int length)
 {
-  //eth_instance.printf_func("Got a multicast packet with type %02X\n", icmp_hdr->icmpv6_hdr.type);
+  eth_instance.printf_func("Got a multicast packet with type %02X\n", icmp_hdr->icmpv6_hdr.type);
   switch (icmp_hdr->icmpv6_hdr.type)
   {
     case ETH_ICMPV6_TYPE_RA:
@@ -96,6 +181,9 @@ void ETH_ICMPV6_MulticastHandler(const ETH_ICMPV6_FullHeader *icmp_hdr, unsigned
       parse_ra(&ra->option_header,
                (int)length - sizeof(ETH_ICMPV6_FullHeader) - sizeof(RouterAnnouncementPacket) + sizeof(RouterAnnouncementOptionHeader),
                icmp_hdr->eth_hdr.src_addr);
+      break;
+    case ETH_ICMPV6_TYPE_NS:
+      parse_ns((const ETH_ICMPV6_NS_FullHeader*)icmp_hdr);
       break;
     default:
       break;

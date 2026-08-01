@@ -3,10 +3,12 @@
 #include <eth_ntp.h>
 #include <memory.h>
 #include <eth_queue.h>
+//#include "board.h"
 
 void ETH_UDP_Handler(const ETH_UDP_FullHeader *udp_hdr)
 {
-  if (udp_hdr->udp_hdr.source_port == NTP_PORT)
+  //LED_RED_ON;
+  if (udp_hdr->udp_hdr.source_port == NTP_PORT_REVERSED)
     ETH_NTP_Process_Timestamp_Reply((const unsigned char*)udp_hdr + sizeof(ETH_UDP_FullHeader));
 }
 
@@ -45,23 +47,6 @@ int ETH_UDP_Send(unsigned short sourcePort, const unsigned char *destIP, unsigne
   queue_add(&eth_user_queue, data_length + sizeof(ETH_UDP_FullHeader));
 
   return 0;
-}
-
-static unsigned int calculate_sum(const unsigned short *addr, unsigned int length)
-{
-  unsigned int sum = 0;
-
-  while (length > 1)
-  {
-    sum += ETH_SwapShort(*addr++);
-    length -= 2;
-  }
-
-  // Handle an odd byte if present
-  if (length != 0)
-    sum += *(unsigned char *)addr << 8;
-
-  return sum;
 }
 
 unsigned short ETH_UDP_ComputeChecksum(const ETH_UDP_FullHeader *header)

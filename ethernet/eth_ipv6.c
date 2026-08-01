@@ -4,6 +4,7 @@
 #include <eth_icmpv6.h>
 #include <eth_ndp.h>
 #include <string.h>
+//#include "board.h"
 
 void ETH_IPV6_MulticastHandler(const ETH_Header *eth_hdr, unsigned int length)
 {
@@ -27,6 +28,7 @@ void ETH_IPV6_Handler(const ETH_Header *eth_hdr, unsigned int length)
 
   ETH_UpdateNdpTable(ipv6_header->sourceIP, eth_hdr->src_addr);
 
+  //LED_RED_ON;
   if (!memcmp(ipv6_header->destIP, eth_instance.ipv6_address, 16))
   {
     switch (ipv6_header->nextHeader)
