@@ -20,8 +20,9 @@ static unsigned char buf[BUF_SIZ];
 static int sockfd_sender;
 static struct ifreq if_idx;
 
-int ethernet_packet_send(const ETH_Header *buff, unsigned int length)
+int ethernet_packet_send(const void *buf, unsigned int length)
 {
+  const ETH_Header *buff = buf;
   struct sockaddr_ll socket_address;
 
   /* Index of the network device */
@@ -69,7 +70,7 @@ int main(int argc, char **argv)
 
   unsigned long long int m = strtoull(argv[2], nullptr, 16);
   printf("My MAC: 0x%llx\n", m);
-  ETH_Init((const unsigned char*)&m, ntp_server_address, printf, true);
+  ETH_Common_Init((const unsigned char*)&m, ntp_server_address, printf, true);
 
   print_ipv6_raw("NTP server address", (const unsigned char*)&ntp_server_address);
 
