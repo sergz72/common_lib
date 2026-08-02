@@ -180,7 +180,7 @@ static void parse_ns(const ETH_ICMPV6_NS_FullHeader *ns)
     header->icmpv6_hdr.checksum =
       ETH_ICMPV6_ComputeChecksum((const ETH_ICMPV6_FullHeader *)header);
     
-    queue_add(&eth_irq_queue, sizeof(ETH_ICMPV6_NS_FullHeader));
+    queue_add(&eth_irq_queue, sizeof(ETH_ICMPV6_NA_FullHeader));
   }
 }
 
@@ -208,8 +208,12 @@ void ETH_ICMPV6_Handler(const ETH_ICMPV6_FullHeader *icmp_hdr, unsigned int leng
 {
   if (icmp_hdr->icmpv6_hdr.type == ETH_ICMPV6_TYPE_ECHO_REQUEST && icmp_hdr->icmpv6_hdr.code == 0) // ICMPV6 echo request
   {
-    if (icmp_hdr->ipv6_hdr.payloadLength < ETH_ICMPV6_HEADER_LENGTH)
+    unsigned int l = ETH_SwapShort(icmp_hdr->ipv6_hdr.payloadLength);
+    if (l < ETH_ICMPV6_HEADER_LENGTH)
       return;
+
+    if (eth_instance.debug)
+      ETH_Puts("Got a ICMPV6 echo request");
 
     ETH_ICMPV6_FullHeader *header = (ETH_ICMPV6_FullHeader *)queue_peekTx(&eth_irq_queue);
 
@@ -230,7 +234,7 @@ void ETH_ICMPV6_Handler(const ETH_ICMPV6_FullHeader *icmp_hdr, unsigned int leng
     header->icmpv6_hdr.code = 0;
     header->icmpv6_hdr.checksum = 0;
 
-    unsigned int data_length = icmp_hdr->ipv6_hdr.payloadLength - ETH_ICMPV6_HEADER_LENGTH;
+    unsigned int data_length = l - ETH_ICMPV6_HEADER_LENGTH;
 
     memcpy((unsigned char*)header + sizeof(ETH_ICMPV6_FullHeader), (unsigned char*)icmp_hdr + sizeof(ETH_ICMPV6_FullHeader),
             data_length);
