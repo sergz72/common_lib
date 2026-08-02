@@ -8,6 +8,7 @@ add_executable(ethernet_library_test
         trng.c
         tests.c
         ../../my/Programs/common_lib/queue.c
+        ../../my/Programs/common_lib/fixed_queue.c
         ../../my/Programs/common_lib/ethernet/eth.c
         ../../my/Programs/common_lib/ethernet/eth_ipv6.c
         ../../my/Programs/common_lib/ethernet/eth_icmpv6.c

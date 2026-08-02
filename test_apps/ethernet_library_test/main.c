@@ -70,7 +70,7 @@ int main(int argc, char **argv)
 
   unsigned long long int m = strtoull(argv[2], nullptr, 16);
   printf("My MAC: 0x%llx\n", m);
-  ETH_Common_Init((const unsigned char*)&m, ntp_server_address, printf, true);
+  ETH_Common_Init((const unsigned char*)&m, ntp_server_address, puts, true);
 
   print_ipv6_raw("NTP server address", (const unsigned char*)&ntp_server_address);
 
