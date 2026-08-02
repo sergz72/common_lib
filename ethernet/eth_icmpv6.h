@@ -28,5 +28,6 @@ typedef struct __attribute__((__packed__))
 
 void ETH_ICMPV6_Handler(const ETH_ICMPV6_FullHeader *icmp_hdr, unsigned int length);
 void ETH_ICMPV6_MulticastHandler(const ETH_ICMPV6_FullHeader *icmp_hdr, unsigned int length);
+unsigned short ETH_ICMPV6_ComputeChecksum(const ETH_ICMPV6_FullHeader *header);
 
 #endif

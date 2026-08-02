@@ -56,7 +56,10 @@ void ethernet_packet_received(const void *buffer, const unsigned int length)
   const ETH_Header *eth_hdr = buffer;
 
   if (eth_instance.debug)
+  {
+    ETH_Printf("Got a packet %d bytes", length);
     ETH_PrintBuffer(buffer, length);
+  }
   switch (eth_hdr->type)
   {
     case ETH_PROTOCOL_IPV6:

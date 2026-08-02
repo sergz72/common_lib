@@ -4,9 +4,9 @@
 #include <stdio.h>
 #include <memory.h>
 
-#define NA_FLAG_ROUTER    (1U << 31)
-#define NA_FLAG_SOLICITED (1U << 30)
-#define NA_FLAG_OVERRIDE  (1U << 29)
+#define NA_FLAG_ROUTER    0x80//(1U << 31)
+#define NA_FLAG_SOLICITED 0x40//(1U << 30)
+#define NA_FLAG_OVERRIDE  0x20//(1U << 29)
 
 typedef struct
 {
@@ -78,8 +78,16 @@ typedef struct
 
 typedef struct
 {
+  unsigned char type;
+  unsigned char length;
+  unsigned char mac[6];
+} ETH_ICMPV6_Address_Option;
+
+typedef struct
+{
   unsigned int flags;
   unsigned char target[16];
+  ETH_ICMPV6_Address_Option ao;
 } NeighborAdvertisementPacket;
 
 typedef struct __attribute__((__packed__))
@@ -154,9 +162,9 @@ static void parse_ns(const ETH_ICMPV6_NS_FullHeader *ns)
     memcpy(header->eth_hdr.dest_addr, ns->eth_hdr.src_addr, 6);
     header->eth_hdr.type = ETH_PROTOCOL_IPV6;
     header->ipv6_hdr.nextHeader = ETH_IPV6_NEXT_HEADER_ICMPV6;
-    header->ipv6_hdr.version_trafficClass_flowLabel_high = 0x60;
+    header->ipv6_hdr.version_trafficClass_flowLabel_high = ns->ipv6_hdr.version_trafficClass_flowLabel_high;
     header->ipv6_hdr.payloadLength = ETH_SwapShort(sizeof(NeighborAdvertisementPacket) + ETH_ICMPV6_HEADER_LENGTH);
-    header->ipv6_hdr.flowLabel_low = 0;
+    header->ipv6_hdr.flowLabel_low = ns->ipv6_hdr.flowLabel_low;
     header->ipv6_hdr.hopLimit = 255;
     memcpy(header->ipv6_hdr.destIP, ns->ipv6_hdr.sourceIP, 16);
     memcpy(header->ipv6_hdr.sourceIP, ns->ns.target, 16);
@@ -165,6 +173,9 @@ static void parse_ns(const ETH_ICMPV6_NS_FullHeader *ns)
     header->icmpv6_hdr.checksum = 0;
     header->na.flags = NA_FLAG_SOLICITED | NA_FLAG_OVERRIDE;
     memcpy(header->na.target, ns->ns.target, 16);
+    header->na.ao.type = 2;
+    header->na.ao.length = 1;
+    memcpy(header->na.ao.mac, eth_instance.mac_address, 6);
 
     header->icmpv6_hdr.checksum =
       ETH_ICMPV6_ComputeChecksum((const ETH_ICMPV6_FullHeader *)header);
