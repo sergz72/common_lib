@@ -29,7 +29,7 @@ void ETH_IPV6_Handler(const ETH_Header *eth_hdr, unsigned int length)
   ETH_UpdateNdpTable(ipv6_header->sourceIP, eth_hdr->src_addr);
 
   //LED_RED_ON;
-  if (!memcmp(ipv6_header->destIP, eth_instance.ipv6_address, 16))
+  if (!ETH_IP_Match(ipv6_header->destIP))
   {
     switch (ipv6_header->nextHeader)
     {

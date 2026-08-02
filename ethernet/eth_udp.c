@@ -14,6 +14,7 @@ void ETH_UDP_Handler(const ETH_UDP_FullHeader *udp_hdr)
 
 int ETH_UDP_Send(unsigned short sourcePort, const unsigned char *destIP, unsigned short destPort, const void *data, unsigned int data_length)
 {
+  const unsigned char *myip = ETH_GetMyIP(destIP);
   unsigned int i;
   ETH_UDP_FullHeader *header = (ETH_UDP_FullHeader *)queue_peekTx(&eth_user_queue);
   const unsigned char *hwAddr = ETH_GetHWAddr(destIP);
@@ -34,7 +35,7 @@ int ETH_UDP_Send(unsigned short sourcePort, const unsigned char *destIP, unsigne
   header->ipv6_hdr.flowLabel_low = 0;
   header->ipv6_hdr.hopLimit = 255;
   memcpy(header->ipv6_hdr.destIP, destIP, 16);
-  memcpy(header->ipv6_hdr.sourceIP, eth_instance.ipv6_address, 16);
+  memcpy(header->ipv6_hdr.sourceIP, myip, 16);
   header->udp_hdr.source_port = ETH_SwapShort(sourcePort);
   header->udp_hdr.dest_port = ETH_SwapShort(destPort);
   header->udp_hdr.length = l;

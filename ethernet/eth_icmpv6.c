@@ -108,7 +108,7 @@ static void parse_ra(const RouterAnnouncementOptionHeader *oh, int length, const
       case ROUTER_ANNOUNCEMENT_PREFIX_INFO:
         const RouterAnnouncementPrefixInfo *pi =(const RouterAnnouncementPrefixInfo*)oh;
         ETH_Set_Prefix(pi->prefix, pi->prefix_length, source_mac);
-        return;
+        break;
       default:
         break;
     }
@@ -143,10 +143,12 @@ unsigned short ETH_ICMPV6_ComputeChecksum(const ETH_ICMPV6_FullHeader *header)
 
 static void parse_ns(const ETH_ICMPV6_NS_FullHeader *ns)
 {
-  eth_instance.printf_func("Got a ns packet\n");
-  if (!memcmp(ns->ns.target, eth_instance.ipv6_address, 16))
+  if (eth_instance.debug)
+    ETH_Puts("Got a ns packet");
+  if (!memcmp(ns->ns.target, eth_instance.local_ipv6_address, 16))
   {
-    eth_instance.printf_func("Sending na reply...\n");
+    if (eth_instance.debug)
+      ETH_Puts("Sending na reply...");
     ETH_ICMPV6_NA_FullHeader *header = (ETH_ICMPV6_NA_FullHeader *)queue_peekTx(&eth_irq_queue);
     memcpy(header->eth_hdr.src_addr, eth_instance.mac_address, 6);
     memcpy(header->eth_hdr.dest_addr, ns->eth_hdr.src_addr, 6);
@@ -157,7 +159,7 @@ static void parse_ns(const ETH_ICMPV6_NS_FullHeader *ns)
     header->ipv6_hdr.flowLabel_low = 0;
     header->ipv6_hdr.hopLimit = 255;
     memcpy(header->ipv6_hdr.destIP, ns->ipv6_hdr.sourceIP, 16);
-    memcpy(header->ipv6_hdr.sourceIP, eth_instance.ipv6_address, 16);
+    memcpy(header->ipv6_hdr.sourceIP, ns->ns.target, 16);
     header->icmpv6_hdr.type = ETH_ICMPV6_TYPE_NA;
     header->icmpv6_hdr.code = 0;
     header->icmpv6_hdr.checksum = 0;
@@ -173,7 +175,8 @@ static void parse_ns(const ETH_ICMPV6_NS_FullHeader *ns)
 
 void ETH_ICMPV6_MulticastHandler(const ETH_ICMPV6_FullHeader *icmp_hdr, unsigned int length)
 {
-  eth_instance.printf_func("Got a multicast packet with type %02X\n", icmp_hdr->icmpv6_hdr.type);
+  if (eth_instance.debug)
+    ETH_Printf("Got a multicast packet with type %02X", icmp_hdr->icmpv6_hdr.type);
   switch (icmp_hdr->icmpv6_hdr.type)
   {
     case ETH_ICMPV6_TYPE_RA:
@@ -194,6 +197,9 @@ void ETH_ICMPV6_Handler(const ETH_ICMPV6_FullHeader *icmp_hdr, unsigned int leng
 {
   if (icmp_hdr->icmpv6_hdr.type == ETH_ICMPV6_TYPE_ECHO_REQUEST && icmp_hdr->icmpv6_hdr.code == 0) // ICMPV6 echo request
   {
+    if (icmp_hdr->ipv6_hdr.payloadLength < ETH_ICMPV6_HEADER_LENGTH)
+      return;
+
     ETH_ICMPV6_FullHeader *header = (ETH_ICMPV6_FullHeader *)queue_peekTx(&eth_irq_queue);
 
     for (unsigned int i = 0; i < ETH_HWADDR_LEN; i++)
@@ -202,17 +208,25 @@ void ETH_ICMPV6_Handler(const ETH_ICMPV6_FullHeader *icmp_hdr, unsigned int leng
       header->eth_hdr.dest_addr[i] = icmp_hdr->eth_hdr.src_addr[i];
     }
     header->eth_hdr.type = ETH_PROTOCOL_IPV6;
-    header->ipv6_hdr.nextHeader = ETH_IPV6_NEXT_HEADER_UDP;
-    header->ipv6_hdr.version_trafficClass_flowLabel_high = 0x60;
-    header->ipv6_hdr.payloadLength = ETH_SwapShort(ETH_ICMPV6_HEADER_LENGTH);
-    header->ipv6_hdr.flowLabel_low = 0;
+    header->ipv6_hdr.nextHeader = ETH_IPV6_NEXT_HEADER_ICMPV6;
+    header->ipv6_hdr.version_trafficClass_flowLabel_high = icmp_hdr->ipv6_hdr.version_trafficClass_flowLabel_high;
+    header->ipv6_hdr.payloadLength = icmp_hdr->ipv6_hdr.payloadLength;
+    header->ipv6_hdr.flowLabel_low = icmp_hdr->ipv6_hdr.flowLabel_low;
     header->ipv6_hdr.hopLimit = 255;
-    memcpy(header->ipv6_hdr.destIP, icmp_hdr->ipv6_hdr.destIP, 16);
-    memcpy(header->ipv6_hdr.sourceIP, eth_instance.ipv6_address, 16);
+    memcpy(header->ipv6_hdr.destIP, icmp_hdr->ipv6_hdr.sourceIP, 16);
+    memcpy(header->ipv6_hdr.sourceIP, icmp_hdr->ipv6_hdr.destIP, 16);
     header->icmpv6_hdr.type = ETH_ICMPV6_TYPE_ECHO_REPLY;
     header->icmpv6_hdr.code = 0;
     header->icmpv6_hdr.checksum = 0;
 
-    queue_add(&eth_irq_queue, sizeof(ETH_ICMPV6_FullHeader));
+    unsigned int data_length = icmp_hdr->ipv6_hdr.payloadLength - ETH_ICMPV6_HEADER_LENGTH;
+
+    memcpy((unsigned char*)header + sizeof(ETH_ICMPV6_FullHeader), (unsigned char*)icmp_hdr + sizeof(ETH_ICMPV6_FullHeader),
+            data_length);
+
+    header->icmpv6_hdr.checksum =
+      ETH_ICMPV6_ComputeChecksum(header);
+
+    queue_add(&eth_irq_queue, sizeof(ETH_ICMPV6_FullHeader) + data_length);
   }
 }

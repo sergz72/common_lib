@@ -31,9 +31,14 @@ void fixed_queue_pop(FixedQueue* q)
   }
 }
 
-void fixed_queue_push(FixedQueue* q, void *data)
+char *fixed_queue_get_current_buffer_pointer(const FixedQueue* q)
 {
-  memcpy(q->buffer + q->item_length * q->current++, data, q->item_length);
+  return q->buffer + q->item_length * q->current;
+}
+
+void fixed_queue_move_next(FixedQueue* q)
+{
+  q->current++;
   if (q->current >= q->size)
     q->current = 0;
   if (q->current == q->first)
@@ -42,6 +47,12 @@ void fixed_queue_push(FixedQueue* q, void *data)
     if (q->first >= q->size)
       q->first = 0;
   }
+}
+
+void fixed_queue_push(FixedQueue* q, const void *data)
+{
+  memcpy(fixed_queue_get_current_buffer_pointer(q), data, q->item_length);
+  fixed_queue_move_next(q);
 }
 
 void fixed_queue_move_to_top(FixedQueue* q, int offset, void *buffer)

@@ -11,15 +11,18 @@ const unsigned char zero_ipv6_address[16] = {0};
 
 ETH_Instance eth_instance;
 
-void ETH_Common_Init(const unsigned char *mac, const unsigned char *ntp_server_address, int printf_func ( const char * format, ... ), bool debug)
+void ETH_Common_Init(const unsigned char *mac, const unsigned char *ntp_server_address, int puts_func (const char * str), bool debug)
 {
   memset(&eth_instance, 0, sizeof(ETH_Instance));
   if (ntp_server_address)
     memcpy(&eth_instance.ntp_server_address, ntp_server_address, 16);
   eth_instance.debug = debug;
-  eth_instance.printf_func = printf_func;
+  eth_instance.puts_func = puts_func;
   memcpy(eth_instance.mac_address, mac, 6);
-  trng_generate((unsigned int*)&eth_instance.ipv6_address, 4);
+  trng_generate((unsigned int*)&eth_instance.global_ipv6_address, 4);
+  trng_generate((unsigned int*)&eth_instance.local_ipv6_address, 4);
+  eth_instance.global_ipv6_address[0] = 0;
+  eth_instance.local_ipv6_address[0] = 0;
   ETH_QueueInit();
   ETH_InitNdpTable();
   ETH_NTP_Init();
@@ -53,12 +56,7 @@ void ethernet_packet_received(const void *buffer, const unsigned int length)
   const ETH_Header *eth_hdr = buffer;
 
   if (eth_instance.debug)
-  {
-    const unsigned char *p = buffer;
-    for (int i = 0; i < length; i++)
-      eth_instance.printf_func("%02X ", *p++);
-    eth_instance.printf_func("\n");
-  }
+    ETH_PrintBuffer(buffer, length);
   switch (eth_hdr->type)
   {
     case ETH_PROTOCOL_IPV6:
@@ -75,20 +73,33 @@ void ethernet_packet_received(const void *buffer, const unsigned int length)
 void ETH_Set_Prefix(const unsigned char *prefix, unsigned char prefix_length, const unsigned char *router_mac)
 {
   prefix_length /= 8;
-  char *current_ip = (char*)&eth_instance.ipv6_address;
-  if (memcmp(current_ip, prefix, prefix_length))
+  if (ETH_IsLocalIP(prefix))
   {
-    memcpy(&eth_instance.router_mac_address, router_mac, 6);
-    memcpy(current_ip, prefix, prefix_length);
-    if (eth_instance.debug)
-      print_ipv6_raw("My IP", current_ip);
+    char *current_ip = (char*)&eth_instance.local_ipv6_address;
+    if (memcmp(current_ip, prefix, prefix_length))
+    {
+      memcpy(current_ip, prefix, prefix_length);
+      if (eth_instance.debug)
+        print_ipv6_raw("My IP", current_ip);
+    }
   }
-  eth_set_prefix_callback();
+  else
+  {
+    char *current_ip = (char*)&eth_instance.global_ipv6_address;
+    if (memcmp(current_ip, prefix, prefix_length))
+    {
+      memcpy(&eth_instance.router_mac_address, router_mac, 6);
+      memcpy(current_ip, prefix, prefix_length);
+      if (eth_instance.debug)
+        print_ipv6_raw("My IP", current_ip);
+    }
+    eth_set_prefix_callback();
+  }
 }
 
 void print_ipv6_raw(const char *title, const unsigned char *ip)
 {
- eth_instance.printf_func("%s: %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x\n",
+  ETH_Printf("%s: %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x",
          title,
          ip[0], ip[1], ip[2], ip[3], ip[4], ip[5], ip[6], ip[7],
          ip[8], ip[9], ip[10], ip[11], ip[12], ip[13], ip[14], ip[15]);
@@ -109,4 +120,18 @@ unsigned int calculate_sum(const unsigned short *addr, unsigned int length)
     sum += *(unsigned char *)addr << 8;
 
   return sum;
+}
+
+bool ETH_IP_Match(const unsigned char *ip)
+{
+  return !memcmp(ip, eth_instance.global_ipv6_address, 16) || !memcmp(ip, eth_instance.local_ipv6_address, 16);
+}
+
+const unsigned char *ETH_GetMyIP(const unsigned char *destIP)
+{
+  if (ETH_IsLocalIP(destIP) && eth_instance.local_ipv6_address[0] != 0)
+    return eth_instance.local_ipv6_address;
+  if (ETH_IsGlobalIP(destIP) && eth_instance.global_ipv6_address[0] != 0)
+    return eth_instance.global_ipv6_address;
+  return nullptr;
 }
