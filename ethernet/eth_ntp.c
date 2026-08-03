@@ -22,7 +22,7 @@ static const ETH_NTP_Packet client_packet =
   .rxTm_s = 0,
   .stratum = 0,
   .txTm_f = 0,
-  .txTm_s = NTP_TIMESTAMP_DELTA_REVERSED
+  .txTm_s = NTP_TIMESTAMP_INIT
 };
 
 bool ntp_time_is_set;
@@ -32,16 +32,18 @@ void ETH_NTP_Init(void)
   ntp_time_is_set = false;
 }
 
-int ETH_NTP_Send_Timestamp_Request(void)
+int ETH_NTP_Send_Timestamp_Request(const unsigned char *address, Queue *q)
 {
-  return ETH_UDP_Send(NTP_PORT, eth_instance.ntp_server_address, NTP_PORT, &client_packet, sizeof(ETH_NTP_Packet), &eth_irq_queue);
+  return ETH_UDP_Send(NTP_PORT, address, NTP_PORT, &client_packet, sizeof(ETH_NTP_Packet), q);
 }
 
 void ETH_NTP_Process_Timestamp_Reply(const void *data)
 {
   const ETH_NTP_Packet *reply = data;
+  unsigned int tm_s;
 
-  unsigned int unix_time = ETH_SwapInt(reply->rxTm_s) - NTP_TIMESTAMP_DELTA;
+  memcpy(&tm_s, &reply->rxTm_s, 4);
+  unsigned int unix_time = ETH_SwapInt(tm_s) - NTP_TIMESTAMP_DELTA;
   ntp_time_received_callback(unix_time);
   ntp_time_is_set = true;
 }

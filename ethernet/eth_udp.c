@@ -3,7 +3,6 @@
 #include <eth_ntp.h>
 #include <memory.h>
 #include <eth_queue.h>
-//#include "board.h"
 
 static void send_echo(const ETH_UDP_FullHeader *udp_hdr)
 {
@@ -35,7 +34,8 @@ static void send_echo(const ETH_UDP_FullHeader *udp_hdr)
 
 void ETH_UDP_Handler(const ETH_UDP_FullHeader *udp_hdr)
 {
-  //LED_RED_ON;
+  if (eth_instance.log_level >= ETH_LOGLEVEL_INFO)
+    ETH_Printf("Got an udp packet from port %d", ETH_SwapShort(udp_hdr->udp_hdr.source_port));
   if (udp_hdr->udp_hdr.source_port == NTP_PORT_REVERSED)
     ETH_NTP_Process_Timestamp_Reply((const unsigned char*)udp_hdr + sizeof(ETH_UDP_FullHeader));
   else if (udp_hdr->udp_hdr.dest_port == PORT_ECHO_REVERSED)
