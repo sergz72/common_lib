@@ -2,6 +2,8 @@
 #include <eth_udp.h>
 #include <string.h>
 
+#include "eth_queue.h"
+
 static const ETH_NTP_Packet client_packet =
 {
   // LI = 03 (clock unsynchronized), VN = 100 (Version 4), Mode = 011 (Client mode)
@@ -32,7 +34,7 @@ void ETH_NTP_Init(void)
 
 int ETH_NTP_Send_Timestamp_Request(void)
 {
-  return ETH_UDP_Send(NTP_PORT, eth_instance.ntp_server_address, NTP_PORT, &client_packet, sizeof(ETH_NTP_Packet));
+  return ETH_UDP_Send(NTP_PORT, eth_instance.ntp_server_address, NTP_PORT, &client_packet, sizeof(ETH_NTP_Packet), &eth_irq_queue);
 }
 
 void ETH_NTP_Process_Timestamp_Reply(const void *data)

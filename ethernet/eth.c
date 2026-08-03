@@ -11,12 +11,12 @@ const unsigned char zero_ipv6_address[16] = {0};
 
 ETH_Instance eth_instance;
 
-void ETH_Common_Init(const unsigned char *mac, const unsigned char *ntp_server_address, int puts_func (const char * str), bool debug)
+void ETH_Common_Init(const unsigned char *mac, const unsigned char *ntp_server_address, int puts_func (const char * str), ETH_LogLevel log_level)
 {
   memset(&eth_instance, 0, sizeof(ETH_Instance));
   if (ntp_server_address)
     memcpy(&eth_instance.ntp_server_address, ntp_server_address, 16);
-  eth_instance.debug = debug;
+  eth_instance.log_level = log_level;
   eth_instance.puts_func = puts_func;
   memcpy(eth_instance.mac_address, mac, 6);
   trng_generate((unsigned int*)&eth_instance.global_ipv6_address, 4);
@@ -55,7 +55,7 @@ void ethernet_packet_received(const void *buffer, const unsigned int length)
 {
   const ETH_Header *eth_hdr = buffer;
 
-  if (eth_instance.debug)
+  if (eth_instance.log_level >= ETH_LOGLEVEL_TRACE)
   {
     ETH_Printf("Got a packet %d bytes", length);
     ETH_PrintBuffer(buffer, length);
@@ -82,7 +82,7 @@ void ETH_Set_Prefix(const unsigned char *prefix, unsigned char prefix_length, co
     if (memcmp(current_ip, prefix, prefix_length))
     {
       memcpy(current_ip, prefix, prefix_length);
-      if (eth_instance.debug)
+      if (eth_instance.log_level >= ETH_LOGLEVEL_INFO)
         print_ipv6_raw("My IP", current_ip);
     }
   }
@@ -93,7 +93,7 @@ void ETH_Set_Prefix(const unsigned char *prefix, unsigned char prefix_length, co
     {
       memcpy(&eth_instance.router_mac_address, router_mac, 6);
       memcpy(current_ip, prefix, prefix_length);
-      if (eth_instance.debug)
+      if (eth_instance.log_level >= ETH_LOGLEVEL_INFO)
         print_ipv6_raw("My IP", current_ip);
     }
     eth_set_prefix_callback();

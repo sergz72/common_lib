@@ -2,6 +2,7 @@
 #define _ETH_UDP_H
 
 #include <eth_ipv6.h>
+#include <queue.h>
 
 typedef struct __attribute__((__packed__))
 {
@@ -21,7 +22,8 @@ typedef struct __attribute__((__packed__))
 #define ETH_UDP_HEADER_LENGTH 8
 
 void ETH_UDP_Handler(const ETH_UDP_FullHeader *udp_hdr);
-int ETH_UDP_Send(unsigned short sourcePort, const unsigned char *destIP, unsigned short destPort, const void *data, unsigned int data_length);
+int ETH_UDP_Send(unsigned short sourcePort, const unsigned char *destIP, unsigned short destPort, const void *data,
+                 unsigned int data_length, Queue *q);
 unsigned short ETH_UDP_ComputeChecksum(const ETH_UDP_FullHeader *header);
 
 #endif

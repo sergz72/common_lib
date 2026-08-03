@@ -21,6 +21,16 @@ typedef struct __attribute__((__packed__))
   unsigned short type;
 } ETH_Header;
 
+typedef enum
+{
+  ETH_LOGLEVEL_NONE,
+  ETH_LOGLEVEL_ERROR,
+  ETH_LOGLEVEL_WARINIG,
+  ETH_LOGLEVEL_INFO,
+  ETH_LOGLEVEL_DEBUG,
+  ETH_LOGLEVEL_TRACE
+} ETH_LogLevel;
+
 typedef struct
 {
   unsigned char mac_address[6];
@@ -29,7 +39,7 @@ typedef struct
   unsigned char local_ipv6_address[16];
   unsigned char ntp_server_address[16];
   int (*puts_func)(const char *str);
-  bool debug;
+  ETH_LogLevel log_level;
 } ETH_Instance;
 
 #define ETH_HEADER_LENGTH 14
@@ -38,7 +48,7 @@ void ethernet_packet_received(const void *buffer, unsigned int length);
 int ethernet_packet_send(const void *buff, unsigned int length);
 void print_ipv6_raw(const char *title, const unsigned char *ip);
 void ETH_Set_Prefix(const unsigned char *prefix, unsigned char prefix_length, const unsigned char *router_mac);
-void ETH_Common_Init(const unsigned char *mac, const unsigned char *ntp_server_address, int puts_func (const char * str), bool debug);
+void ETH_Common_Init(const unsigned char *mac, const unsigned char *ntp_server_address, int puts_func (const char * str), ETH_LogLevel log_level);
 void eth_set_prefix_callback(void);
 int ETH_Parse_IPV6(const unsigned char *address, unsigned char *result);
 unsigned int calculate_sum(const unsigned short *addr, unsigned int length);
