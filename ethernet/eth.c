@@ -23,6 +23,7 @@ void ETH_Common_Init(const unsigned char *mac, const unsigned char *ntp_server_a
   trng_generate((unsigned int*)&eth_instance.local_ipv6_address, 4);
   eth_instance.global_ipv6_address[0] = 0;
   eth_instance.local_ipv6_address[0] = 0;
+  eth_instance.flowLabel = 1;
   ETH_QueueInit();
   ETH_InitNdpTable();
   ETH_NTP_Init();

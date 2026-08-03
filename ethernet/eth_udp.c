@@ -63,7 +63,7 @@ int ETH_UDP_Send(unsigned short sourcePort, const unsigned char *destIP, unsigne
   header->ipv6_hdr.nextHeader = ETH_IPV6_NEXT_HEADER_UDP;
   header->ipv6_hdr.version_trafficClass_flowLabel_high = 0x60;
   header->ipv6_hdr.payloadLength = l;
-  header->ipv6_hdr.flowLabel_low = 0;
+  header->ipv6_hdr.flowLabel_low = eth_instance.flowLabel++;
   header->ipv6_hdr.hopLimit = 255;
   memcpy(header->ipv6_hdr.destIP, destIP, 16);
   memcpy(header->ipv6_hdr.sourceIP, myip, 16);

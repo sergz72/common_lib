@@ -276,7 +276,7 @@ void ETH_NS_Send(const unsigned char *address)
   header->ipv6_hdr.nextHeader = ETH_IPV6_NEXT_HEADER_ICMPV6;
   header->ipv6_hdr.version_trafficClass_flowLabel_high = 0x60;
   header->ipv6_hdr.payloadLength = ETH_SwapShort(sizeof(NeighborSolicitationPacket) + ETH_ICMPV6_HEADER_LENGTH);
-  header->ipv6_hdr.flowLabel_low = 0;
+  header->ipv6_hdr.flowLabel_low = eth_instance.flowLabel++;
   header->ipv6_hdr.hopLimit = 255;
   memset(header->ipv6_hdr.destIP, 0, 16);
   header->ipv6_hdr.destIP[0] = 0xFF;

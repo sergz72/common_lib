@@ -40,6 +40,7 @@ typedef struct
   unsigned char ntp_server_address[16];
   int (*puts_func)(const char *str);
   ETH_LogLevel log_level;
+  unsigned short flowLabel;
 } ETH_Instance;
 
 #define ETH_HEADER_LENGTH 14
