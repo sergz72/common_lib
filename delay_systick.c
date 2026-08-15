@@ -15,6 +15,7 @@ void SysTick_Handler(void)
 
 void systick_start(unsigned int us)
 {
+        systick_set_value(0);
         systick_set_reload(us * SYSTICK_MULTIPLIER / SYSTICK_DIVIDER);
 
         systick_interrupt_enable();

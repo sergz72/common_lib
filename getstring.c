@@ -6,6 +6,7 @@ static char *b, *buf;
 static int idx, blen;
 static void (*putsf_)(const char *);
 static int (*getcharf_)(void);
+static bool echo_on;
 
 void getstring_init(char *buffer, int buffer_length, int (*getchar_)(void), void (*puts_)(const char *))
 {
@@ -14,6 +15,17 @@ void getstring_init(char *buffer, int buffer_length, int (*getchar_)(void), void
   blen = buffer_length;
   putsf_ = puts_;
   getcharf_ = getchar_;
+  echo_on = true;
+}
+
+void getstring_echo(bool on)
+{
+  echo_on = on;
+}
+
+bool getstring_get_echo(void)
+{
+  return echo_on;
 }
 
 void getstring_buffer_init(const char *buffer_init)
@@ -43,10 +55,13 @@ int getstring_next(void)
       case EOF:
         return EOF;
       case '\r':
-        s[0] = c;
-        s[1] = '\n';
-        s[2] = 0;
-        putsf_(s);
+        if (echo_on)
+        {
+          s[0] = c;
+          s[1] = '\n';
+          s[2] = 0;
+          putsf_(s);
+        }
         break;
       case 0x1B:
         c = getcharf_();
@@ -74,9 +89,12 @@ int getstring_next(void)
       case 0x7F:
         if (idx)
         {
-          s[0] = c;
-          s[1] = 0;
-          putsf_(s);
+          if (echo_on)
+          {
+            s[0] = c;
+            s[1] = 0;
+            putsf_(s);
+          }
           buf--;
           idx--;
         }
@@ -84,9 +102,12 @@ int getstring_next(void)
       default:
         if (idx < blen - 1)
         {
-          s[0] = c;
-          s[1] = 0;
-          putsf_(s);
+          if (echo_on)
+          {
+            s[0] = c;
+            s[1] = 0;
+            putsf_(s);
+          }
           *buf++ = c;
           idx++;
         }
