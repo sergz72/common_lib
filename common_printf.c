@@ -6,8 +6,7 @@
 
 int common_printf(const char *format, ...)
 {
-  static char buffer[PRINTF_BUFFER_LENGTH], buffer2[PRINTF_BUFFER_LENGTH];
-  char *p, *p2;
+  char buffer[PRINTF_BUFFER_LENGTH];
   va_list vArgs;
   int rc;
 
@@ -18,20 +17,6 @@ int common_printf(const char *format, ...)
   rc = vsnprintf(buffer, sizeof(buffer), format, vArgs);
 #endif
   va_end(vArgs);
-  p = buffer;
-  p2 = buffer2;
-  int l = 0;
-  while (*p)
-  {
-    if (*p == '\n')
-    {
-      *p2++ = '\r';
-      l++;
-    }
-    *p2++ = *p++;
-    l++;
-  }
-  *p2 = 0;
-  puts_(buffer2);
+  puts_(buffer);
   return rc;
 }
