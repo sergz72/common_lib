@@ -2,106 +2,6 @@
 #include <stdint.h>
 #include <string.h>
 
-typedef struct
-{
-  unsigned char magic;
-  char elf[3];
-  unsigned char bits;
-  unsigned char endianess;
-  unsigned char header_version;
-  unsigned char os_abi;
-  unsigned char padding[8];
-  unsigned short type;
-  unsigned short instruction_set;
-  uint32_t version;
-#ifdef _M_X64
-  uint64_t entry_offset;
-  uint64_t program_header_table_offset;
-  uint64_t section_header_table_offset;
-#else
-  uint32_t entry_offset;
-  uint32_t program_header_table_offset;
-  uint32_t section_header_table_offset;
-#endif
-  uint32_t flags;
-  unsigned short header_size;
-  unsigned short program_header_table_entry_size;
-  unsigned short program_header_table_entries_count;
-  unsigned short section_header_table_entry_size;
-  unsigned short section_header_table_entries_count;
-  unsigned short section_header_string_table_section;
-} elf_header;
-
-typedef struct
-{
-  uint32_t name_offset;
-  uint32_t type;
-#ifdef _M_X64
-  uint64_t flags;
-  uint64_t address;
-  uint64_t offset;
-  uint64_t size;
-#else
-  uint32_t flags;
-  uint32_t address;
-  uint32_t offset;
-  uint32_t size;
-#endif
-  uint32_t link;
-  uint32_t info;
-} elf_section_header;
-
-typedef struct
-{
-#ifdef _M_X64
-  uint32_t name_offset;
-  unsigned char info;
-  unsigned char other;
-  unsigned short section_index;
-  uint64_t value;
-  uint64_t size;
-#else
-  uint32_t name_offset;
-  uint32_t value;
-  uint32_t size;
-  unsigned char info;
-  unsigned char other;
-  unsigned short section_index;
-#endif
-} symbol_table_entry;
-
-typedef struct
-{
-#ifdef _M_X64
-  uint64_t offset;
-  uint64_t info;
-  int64_t addend;
-#else
-  uint32_t offset;
-  uint32_t info;
-  int32_t addend;
-#endif
-} relocation_table_entry;
-
-typedef struct
-{
-#ifdef _M_X64
-  uint64_t offset;
-  uint64_t info;
-#else
-  uint32_t offset;
-  uint32_t info;
-#endif
-} relocation_table_entry_wo_addens;
-
-#ifdef _M_X64
-#define R_SYM(i)    ((i)>>32)
-#define R_TYPE(i)   ((i)&0xffffffffL)
-#else
-#define R_SYM(i)	((i)>>8)
-#define R_TYPE(i)   ((unsigned char)(i))
-#endif
-
 static const elf_header *h;
 static const char *symbol_strings;
 static const symbol_table_entry *symbol_table;
@@ -240,14 +140,9 @@ int object_file_load(void *data, const function_def *_function_map, void *bss, u
   h = data;
   function_map = _function_map;
 
-  if (h->magic != 0x7F || h->elf[0] != 'E' || h->elf[1] != 'L' || h->elf[2] != 'F')
-    return 1;
-  if (sizeof(void *) == 4 && h->bits != 1)
-    return 2;
-  if (sizeof(void *) == 8 && h->bits != 2)
-    return 2;
-  if (h->endianess != 1)
-    return 3;
+  int rc = elf_header_check(h);
+  if (rc != 0)
+    return rc;
   if (h->type != 1)
     return 4;
 
