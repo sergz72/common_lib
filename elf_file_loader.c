@@ -6,12 +6,35 @@
 
 static unsigned int calc_alloc_size(unsigned int size)
 {
-  if (!size)
+  return (size + 3) & 0xFFFFFFFC;
+/*  if (!size)
     return 0;
   if (size == 1)
     return 1;
 
-  return 1 << (32 - __builtin_clz(size - 1));
+  return 1 << (32 - __builtin_clz(size - 1));*/
+}
+
+static unsigned int calc_args_size(int argc, const char **argv)
+{
+  unsigned int size = argc * sizeof(char*);
+  while (argc--)
+    size += strlen(*argv++) + 1;
+  return size;
+}
+
+static void argcpy(void *p, int argc, const char **argv)
+{
+  char **argvp = p;
+  char *argp = (char*)p + argc * sizeof(char*);
+  for (int i = 0; i < argc; i++)
+  {
+    const char *arg = *argv++;
+    size_t l = strlen(arg);
+    strcpy(argp, arg);
+    *argvp++ = argp;
+    argp += l + 1;
+  }
 }
 
 static int compare_function_def(const void *a, const void *b)
@@ -30,14 +53,14 @@ static const void* find_function_address(const char* name, const function_def* f
 }
 
 int elf_file_load(const void *data, const function_def *function_map, unsigned int function_map_size,
-                  unsigned int stack_size, app_image *image)
+                  unsigned int stack_size, int argc, const char **argv, app_image *image)
 {
   const elf_header *h = data;
 
   int rc = elf_header_check(h);
   if (rc != 0)
     return rc;
-  if (h->type != 3)
+  if (h->type != 3 && h->type != 2)
     return 4;
 
   const void *textp = nullptr;
@@ -91,7 +114,10 @@ int elf_file_load(const void *data, const function_def *function_map, unsigned i
   }
   if (!textp || !gotp)
     return 6;
-  unsigned int text_size = (void*)gotp - textp;
+  const unsigned int args_size = calc_args_size(argc, argv);
+  const unsigned int text_copy_size = (void*)gotp - textp;
+  image->argvp = (const char**)((char*)image->address + text_copy_size + got_size);
+  unsigned int text_size = text_copy_size + got_size + args_size;
   image->text_size = datap == nullptr ? calc_alloc_size(text_size) : datap - textp;
   unsigned int data_alloc_size = calc_alloc_size(data_size + stack_size);
 #ifdef ELF_LOADER_PRINTF
@@ -102,7 +128,8 @@ int elf_file_load(const void *data, const function_def *function_map, unsigned i
   image->address = rwx_alloc(image->size);
   if (!image->address)
     return 7;
-  memcpy(image->address, textp, text_size);
+  memcpy(image->address, textp, text_copy_size);
+  argcpy(image->argvp, argc, argv);
   memcpy(image->address + image->text_size, datap, data_copy_size);
   if (relap)
   {
