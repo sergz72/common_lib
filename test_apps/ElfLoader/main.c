@@ -11,7 +11,8 @@ const function_def function_map[] = {
   {"osDelay", osDelay},
   {"osExit", osExit},
   {"osLeds", osLeds},
-  {"osTaskSwitch", osTaskSwitch}
+  {"osTaskSwitch", osTaskSwitch},
+  {"printf", printf}
 };
 
 static app_image image;
@@ -61,15 +62,15 @@ void rwx_free(void *p, unsigned int size)
   munmap(p, size);
 }
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
   FILE *pfile;
   void *buffer;
   struct stat st;
 
-  if (argc != 2)
+  if (argc < 2)
   {
-    puts("Usage: ElfLoader elf_file_name");
+    puts("Usage: ElfLoader elf_file_name [parameters]");
     return 1;
   }
 
@@ -105,7 +106,7 @@ int main(int argc, char **argv)
 
   fclose(pfile);
 
-  int rc = elf_file_load(buffer, function_map, sizeof(function_map)/sizeof(function_def), 2048, &image);
+  int rc = elf_file_load(buffer, function_map, sizeof(function_map)/sizeof(function_def), 2048, argc - 1, &argv[1], &image);
   printf("elf_file_load returned %d\n", rc);
   if (rc != 0)
   {
@@ -115,7 +116,7 @@ int main(int argc, char **argv)
 
   free(buffer);
 
-  image.main(0, nullptr);
+  image.main(argc - 1, &argv[1]);
 
   rwx_free(image.address, image.size);
 

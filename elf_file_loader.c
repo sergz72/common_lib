@@ -116,7 +116,6 @@ int elf_file_load(const void *data, const function_def *function_map, unsigned i
     return 6;
   const unsigned int args_size = calc_args_size(argc, argv);
   const unsigned int text_copy_size = (void*)gotp - textp;
-  image->argvp = (const char**)((char*)image->address + text_copy_size + got_size);
   unsigned int text_size = text_copy_size + got_size + args_size;
   image->text_size = datap == nullptr ? calc_alloc_size(text_size) : datap - textp;
   unsigned int data_alloc_size = calc_alloc_size(data_size + stack_size);
@@ -128,6 +127,7 @@ int elf_file_load(const void *data, const function_def *function_map, unsigned i
   image->address = rwx_alloc(image->size);
   if (!image->address)
     return 7;
+  image->argvp = (const char**)((char*)image->address + text_copy_size + got_size);
   memcpy(image->address, textp, text_copy_size);
   argcpy(image->argvp, argc, argv);
   memcpy(image->address + image->text_size, datap, data_copy_size);
