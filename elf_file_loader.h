@@ -12,8 +12,8 @@ typedef struct
   const char **argvp;
 } app_image;
 
-void *rwx_alloc(unsigned int size);
-void rwx_free(void *p, unsigned int size);
+void *elf_file_alloc(unsigned int size, unsigned int text_size);
+void elf_file_free(void *p, unsigned int size);
 
 int elf_file_load(const void *data, const function_def *function_map, unsigned int function_map_size,
                   unsigned int stack_size, int argc, const char **argv, app_image *image);

@@ -1,19 +1,16 @@
 #include "board.h"
 #include <elf_file_loader.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static unsigned int calc_alloc_size(unsigned int size)
+typedef struct
 {
-  return (size + 3) & 0xFFFFFFFC;
-/*  if (!size)
-    return 0;
-  if (size == 1)
-    return 1;
-
-  return 1 << (32 - __builtin_clz(size - 1));*/
-}
+  symbol_table_entry *symbol_table;
+  unsigned int symbol_table_size;
+  char *symbol_strings;
+} symbol_table_info;
 
 static unsigned int calc_args_size(int argc, const char **argv)
 {
@@ -52,6 +49,23 @@ static const void* find_function_address(const char* name, const function_def* f
   return ff ? ff->pointer : nullptr;
 }
 
+static unsigned long long int get_symbol_value_by_name(const char *name, const symbol_table_info *symbols)
+{
+  unsigned int size = symbols->symbol_table_size;
+  const symbol_table_entry *p = symbols->symbol_table;
+
+  while (size--)
+  {
+    unsigned char bind = p->info >> 4;
+    const char *symbol_name = symbols->symbol_strings + p->name_offset;
+    if (bind == 1 && !strcmp(name, symbol_name))
+      return p->value;
+    p++;
+  }
+
+  return ULLONG_MAX;
+}
+
 int elf_file_load(const void *data, const function_def *function_map, unsigned int function_map_size,
                   unsigned int stack_size, int argc, const char **argv, app_image *image)
 {
@@ -72,6 +86,7 @@ int elf_file_load(const void *data, const function_def *function_map, unsigned i
   unsigned int got_size = 0;
   unsigned int data_size = 0;
   unsigned int data_copy_size = 0;
+  symbol_table_info symbols = {0};
   int rela_size = 0;
   const char *section_header_table = (const char *)data + h->section_header_table_offset;
   elf_section_header *strings_section = (elf_section_header *) (section_header_table +
@@ -110,23 +125,38 @@ int elf_file_load(const void *data, const function_def *function_map, unsigned i
       dynsymp = (const symbol_table_entry*)((char*)data + sh->offset);
     else if (!strcmp(name, ".dynstr"))
       dynstrp = (char*)data + sh->offset;
+    else if (sh->type == 3 && !strcmp(name, ".strtab"))
+      symbols.symbol_strings = (char*)data + sh->offset;
+    else if (sh->type == 2)
+    {
+      symbols.symbol_table = (symbol_table_entry *)((char *) data + sh->offset);
+      symbols.symbol_table_size = sh->size / sizeof(symbol_table_entry);
+    }
     section_header_table += h->section_header_table_entry_size;
   }
-  if (!textp || !gotp)
+  if (!textp || !gotp || !symbols.symbol_table || !symbols.symbol_strings)
     return 6;
-  const unsigned int args_size = calc_args_size(argc, argv);
+  unsigned long long int flash_size = get_symbol_value_by_name("FLASH_SIZE", &symbols);
+  if (flash_size == ULLONG_MAX)
+    return 7;
+  unsigned long long int ram_size = get_symbol_value_by_name("RAM_SIZE", &symbols);
+  if (ram_size == ULLONG_MAX)
+    return 8;
   const unsigned int text_copy_size = (void*)gotp - textp;
-  unsigned int text_size = text_copy_size + got_size + args_size;
-  image->text_size = datap == nullptr ? calc_alloc_size(text_size) : datap - textp;
-  unsigned int data_alloc_size = calc_alloc_size(data_size + stack_size);
+  image->text_size = datap == nullptr ? (unsigned int)flash_size : datap - textp;
+  unsigned int data_alloc_size = (unsigned int)ram_size;
+  if (data_alloc_size < stack_size)
+    data_alloc_size = stack_size * 2;
 #ifdef ELF_LOADER_PRINTF
+  const unsigned int args_size = calc_args_size(argc, argv);
+  unsigned int text_size = text_copy_size + got_size + args_size;
   ELF_LOADER_PRINTF("Text size %d alloc size %d\n", text_size, image->text_size);
   ELF_LOADER_PRINTF("Data size %d alloc size %d copy size %d\n", data_size, data_alloc_size, data_copy_size);
 #endif
   image->size = image->text_size + data_alloc_size;
-  image->address = rwx_alloc(image->size);
+  image->address = elf_file_alloc(image->size, image->text_size);
   if (!image->address)
-    return 7;
+    return 9;
   image->argvp = (const char**)((char*)image->address + text_copy_size + got_size);
   memcpy(image->address, textp, text_copy_size);
   argcpy(image->argvp, argc, argv);
@@ -134,7 +164,7 @@ int elf_file_load(const void *data, const function_def *function_map, unsigned i
   if (relap)
   {
     if (!dynsymp || !dynstrp)
-      return 8;
+      return 10;
     printf("GOT size %d\n", got_size);
     unsigned int got_offset = (void*)gotp - textp;
     while (rela_size > 0)
@@ -155,7 +185,7 @@ int elf_file_load(const void *data, const function_def *function_map, unsigned i
 #endif
         const void *address = find_function_address(name, function_map, function_map_size);
         if (!address)
-          return 9;
+          return 11;
         got_item *got_itemp = (got_item*)((char*)image->address + relap->offset);
         *got_itemp = (got_item)address;
       }
