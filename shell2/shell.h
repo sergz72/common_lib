@@ -22,14 +22,13 @@ int shell_execute(const char *command);
 const char *shell_get_prev_from_history(void);
 const char *shell_get_next_from_history(void);
 void shell_handler(void);
-int getch_(void);
+int shell_getch(void);
 void shell_process_char(char c);
 
 #ifdef __cplusplus
 }
 #endif
 
-extern unsigned char rx_buffer[];
 extern char command_line[];
 
 #endif

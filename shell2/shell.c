@@ -19,7 +19,7 @@ static int history_offset;
 #endif
 
 static unsigned char *rx_buffer_write_p, *rx_buffer_read_p;
-unsigned char rx_buffer[RX_BUFFER_LENGTH];
+static unsigned char rx_buffer[SHELL_RX_BUFFER_LENGTH];
 char command_line[COMMAND_LINE_LENGTH];
 
 void shell_init(printf_func _pfunc)
@@ -197,12 +197,12 @@ const char *shell_get_next_from_history(void)
 #endif
 }
 
-int getch_(void)
+int shell_getch(void)
 {
   if (rx_buffer_write_p != rx_buffer_read_p)
   {
     char c = (char)*rx_buffer_read_p++;
-    if (rx_buffer_read_p == rx_buffer + RX_BUFFER_LENGTH)
+    if (rx_buffer_read_p == rx_buffer + SHELL_RX_BUFFER_LENGTH)
       rx_buffer_read_p = rx_buffer;
     return c;
   }
@@ -241,6 +241,6 @@ void shell_handler(void)
 void shell_process_char(char c)
 {
   *rx_buffer_write_p++ = c;
-  if (rx_buffer_write_p == rx_buffer + RX_BUFFER_LENGTH)
+  if (rx_buffer_write_p == rx_buffer + SHELL_RX_BUFFER_LENGTH)
     rx_buffer_write_p = rx_buffer;
 }
